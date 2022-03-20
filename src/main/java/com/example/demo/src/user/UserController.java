@@ -63,6 +63,7 @@ public class UserController {
     /**
      * 회원 1명 조회 API
      * [GET] /users/:userIdx
+     * 브랜치 테스트용
      * @return BaseResponse<GetUserRes>
      */
     // Path-variable
