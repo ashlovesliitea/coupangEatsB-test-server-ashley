@@ -39,31 +39,22 @@ public class UserService {
         }
 
         String pwd;
-        try{
+
             //암호화
             pwd = new SHA256().encrypt(postUserReq.getUser_pw());
             postUserReq.setUser_pw(pwd);
             System.out.println("pwd = " + pwd);
-        } catch (Exception ignored) {
-            throw new BaseException(PASSWORD_ENCRYPTION_ERROR);
-        }
-        try{
+
             int userIdx = userDao.createUser(postUserReq);
             return new PostUserRes(userIdx);
-        } catch (Exception exception) {
-            System.out.println("exception = " + exception);
-            throw new BaseException (DATABASE_ERROR);
-        }
+
     }
 
     public void modifyUserName(PatchUserReq patchUserReq) throws BaseException {
-        try{
+
             int result = userDao.modifyUserName(patchUserReq);
             if(result == 0){
                 throw new BaseException(MODIFY_FAIL_USERNAME);
             }
-        } catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
     }
 }

@@ -32,54 +32,40 @@ public class UserProvider {
     }
 
     public List<GetUserRes> getUsers() throws BaseException{
-        try{
+
             List<GetUserRes> getUserRes = userDao.getUsers();
             return getUserRes;
-        }
-        catch (Exception exception) {
-            throw new BaseException(DATABASE_ERROR);
-        }
     }
 
     public List<GetUserRes> getUsersByEmail(String email) throws BaseException{
-        try{
+
             List<GetUserRes> getUsersRes = userDao.getUsersByEmail(email);
             return getUsersRes;
-        }
-        catch (Exception exception) {
-            throw new BaseException(DATABASE_ERROR);
-        }
-                    }
+
+    }
 
 
     public GetUserRes getUser(int userIdx) throws BaseException {
-        try {
+
             GetUserRes getUserRes = userDao.getUser(userIdx);
             return getUserRes;
-        } catch (Exception exception) {
-            throw new BaseException(DATABASE_ERROR);
-        }
+
     }
 
     public int checkUserId(String userId) throws BaseException{
-        try{
             return userDao.checkUserId(userId);
-        } catch (Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
+
     }
 
     public PostLoginRes logIn(PostLoginReq postLoginReq) throws BaseException{
         User user = userDao.getPwd(postLoginReq);
         String encryptPwd;
-        try {
-            encryptPwd=new SHA256().encrypt(postLoginReq.getPassword());
-        } catch (Exception ignored) {
-            throw new BaseException(PASSWORD_DECRYPTION_ERROR);
-        }
 
-        if(user.getPassword().equals(encryptPwd)){
-            int userIdx = user.getUserIdx();
+        encryptPwd=new SHA256().encrypt(postLoginReq.getUser_pw());
+
+
+        if(user.getUser_pw().equals(encryptPwd)){
+            int userIdx = user.getUser_idx();
             String jwt = jwtService.createJwt(userIdx);
             return new PostLoginRes(userIdx,jwt);
         }

@@ -1,5 +1,6 @@
 package com.example.demo.src.user;
 
+import com.example.demo.annotation.NoAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.demo.config.BaseException;
@@ -39,11 +40,12 @@ public class UserController {
     /**
      * 회원 조회 API
      * [GET] /users
-     * 회원 번호 및 이메일 검색 조회 API
-     * [GET] /users? Email=
+     * 전체 회원/이메일로 조회 api
+     * [GET] /users
      * @return BaseResponse<List<GetUserRes>>
      */
     //Query String
+    @NoAuth
     @ResponseBody
     @GetMapping("") // (GET) 127.0.0.1:9000/app/users
     public BaseResponse<List<GetUserRes>> getUsers(@RequestParam(required = false) String Email) {
@@ -67,6 +69,7 @@ public class UserController {
      * @return BaseResponse<GetUserRes>
      */
     // Path-variable
+    @NoAuth
     @ResponseBody
     @GetMapping("/{userIdx}") // (GET) 127.0.0.1:9000/app/users/:userIdx
     public BaseResponse<GetUserRes> getUser(@PathVariable("userIdx") int userIdx) {
@@ -86,6 +89,7 @@ public class UserController {
      * @return BaseResponse<PostUserRes>
      */
     // Body
+    @NoAuth
     @ResponseBody
     @PostMapping("")
     public BaseResponse<PostUserRes> createUser(@RequestBody PostUserReq postUserReq) {
@@ -106,15 +110,23 @@ public class UserController {
     }
     /**
      * 로그인 API
-     * [POST] /users/logIn
+     * [POST] /users/sign-in
      * @return BaseResponse<PostLoginRes>
      */
+    @NoAuth
     @ResponseBody
-    @PostMapping("/logIn")
+    @PostMapping("/sign-in")
     public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq){
+
+        if(postLoginReq.getUser_id()== null){
+            return new BaseResponse<>(POST_USERS_EMPTY_EMAIL);
+        }
+        //이메일 정규표현
+        if(!isRegexEmail(postLoginReq.getUser_id())){
+            return new BaseResponse<>(POST_USERS_INVALID_EMAIL);
+        }
+
         try{
-            // TODO: 로그인 값들에 대한 형식적인 validatin 처리해주셔야합니다!
-            // TODO: 유저의 status ex) 비활성화된 유저, 탈퇴한 유저 등을 관리해주고 있다면 해당 부분에 대한 validation 처리도 해주셔야합니다.
             PostLoginRes postLoginRes = userProvider.logIn(postLoginReq);
             return new BaseResponse<>(postLoginRes);
         } catch (BaseException exception){
@@ -138,7 +150,7 @@ public class UserController {
                 return new BaseResponse<>(INVALID_USER_JWT);
             }
             //같다면 유저네임 변경
-            PatchUserReq patchUserReq = new PatchUserReq(userIdx,user.getUserName());
+            PatchUserReq patchUserReq = new PatchUserReq(userIdx,user.getUser_name());
             userService.modifyUserName(patchUserReq);
 
             String result = "";
