@@ -90,11 +90,11 @@ public class UserController {
     @PostMapping("")
     public BaseResponse<PostUserRes> createUser(@RequestBody PostUserReq postUserReq) {
 
-        if(postUserReq.getEmail() == null){
+        if(postUserReq.getUser_id()== null){
             return new BaseResponse<>(POST_USERS_EMPTY_EMAIL);
         }
         //이메일 정규표현
-        if(!isRegexEmail(postUserReq.getEmail())){
+        if(!isRegexEmail(postUserReq.getUser_id())){
             return new BaseResponse<>(POST_USERS_INVALID_EMAIL);
         }
         try{
