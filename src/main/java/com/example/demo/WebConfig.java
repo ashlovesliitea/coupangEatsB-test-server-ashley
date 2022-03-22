@@ -18,7 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry reg){
         reg.addInterceptor(new AuthenticationInterceptor(jwtService,objectMapper))
                 .order(1)
-                .addPathPatterns("/**");
+                .addPathPatterns("/app/**");
         //.excludePathPatterns
     }
 }

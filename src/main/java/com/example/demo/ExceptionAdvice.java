@@ -23,10 +23,16 @@ public class ExceptionAdvice {
         return new BaseResponse<>(e.getStatus());
     }
 
-    @ExceptionHandler(value= {DataAccessException.class, SQLException.class})
+    @ExceptionHandler(value= { SQLException.class})
     public BaseResponse DatabaseExceptionHandler(){
         //db관련 exception
         return new BaseResponse<>(BaseResponseStatus.DATABASE_ERROR);
+    }
+
+    @ExceptionHandler(value= {DataAccessException.class})
+    public BaseResponse DataAccessExceptionHandler(){
+        //db관련 exception
+        return new BaseResponse<>(BaseResponseStatus.DATA_NOT_FOUND);
     }
 
     @ExceptionHandler(value= GeneralSecurityException.class)

@@ -32,28 +32,28 @@ public class UserDao {
     }
 
     public List<GetUserRes> getUsersByEmail(String email){
-        String getUsersByEmailQuery = "select * from UserInfo where email =?";
+        String getUsersByEmailQuery = "select * from User where user_id =?";
         String getUsersByEmailParams = email;
         return this.jdbcTemplate.query(getUsersByEmailQuery,
                 (rs, rowNum) -> new GetUserRes(
-                        rs.getInt("userIdx"),
-                        rs.getString("userName"),
-                        rs.getString("ID"),
-                        rs.getString("Email"),
-                        rs.getString("password")),
+                        rs.getInt("user_idx"),
+                        rs.getString("user_id"),
+                        rs.getString("user_pw"),
+                        rs.getString("user_name"),
+                        rs.getString("user_phone")),
                 getUsersByEmailParams);
     }
 
     public GetUserRes getUser(int userIdx){
-        String getUserQuery = "select * from UserInfo where userIdx = ?";
+        String getUserQuery = "select * from User where user_idx = ?";
         int getUserParams = userIdx;
         return this.jdbcTemplate.queryForObject(getUserQuery,
                 (rs, rowNum) -> new GetUserRes(
-                        rs.getInt("userIdx"),
-                        rs.getString("userName"),
-                        rs.getString("ID"),
-                        rs.getString("Email"),
-                        rs.getString("password")),
+                        rs.getInt("user_idx"),
+                        rs.getString("user_id"),
+                        rs.getString("user_pw"),
+                        rs.getString("user_name"),
+                        rs.getString("user_phone")),
                 getUserParams);
     }
     
@@ -81,14 +81,14 @@ public class UserDao {
     }
 
     public int modifyUserName(PatchUserReq patchUserReq){
-        String modifyUserNameQuery = "update UserInfo set userName = ? where userIdx = ? ";
-        Object[] modifyUserNameParams = new Object[]{patchUserReq.getUserName(), patchUserReq.getUserIdx()};
+        String modifyUserNameQuery = "update User set user_name = ? where user_idx = ? ";
+        Object[] modifyUserNameParams = new Object[]{patchUserReq.getUser_name(), patchUserReq.getUser_idx()};
 
         return this.jdbcTemplate.update(modifyUserNameQuery,modifyUserNameParams);
     }
 
     public User getPwd(PostLoginReq postLoginReq){
-        String getPwdQuery = "select * from User where user_id= ?";
+        String getPwdQuery = "select user_idx,user_id,user_pw,user_name,user_phone from User where user_id= ?";
         String getPwdParams = postLoginReq.getUser_id();
 
         return this.jdbcTemplate.queryForObject(getPwdQuery,
@@ -96,7 +96,7 @@ public class UserDao {
                         rs.getInt("user_idx"),
                         rs.getString("user_id"),
                         rs.getString("user_pw"),
-                        rs.getString("user_email"),
+                        rs.getString("user_name"),
                         rs.getString("user_phone")
                 ),
                 getPwdParams
