@@ -41,21 +41,21 @@ public class UserController {
      * 회원 조회 API
      * [GET] /users
      * 전체 회원/이메일로 조회 api
-     * [GET] /users
+     * [GET] /users?email=
      * @return BaseResponse<List<GetUserRes>>
      */
     //Query String
     @NoAuth
     @ResponseBody
-    @GetMapping("") // (GET) 127.0.0.1:9000/app/users
-    public BaseResponse<List<GetUserRes>> getUsers(@RequestParam(required = false) String Email) {
+    @GetMapping("") // (GET) 127.0.0.1:9000/app/users?email=
+    public BaseResponse<List<GetUserRes>> getUsers(@RequestParam(required = false) String email) {
         try{
-            if(Email == null){
+            if(email == null){
                 List<GetUserRes> getUsersRes = userProvider.getUsers();
                 return new BaseResponse<>(getUsersRes);
             }
             // Get Users
-            List<GetUserRes> getUsersRes = userProvider.getUsersByEmail(Email);
+            List<GetUserRes> getUsersRes = userProvider.getUsersByEmail(email);
             return new BaseResponse<>(getUsersRes);
         } catch(BaseException exception){
             return new BaseResponse<>((exception.getStatus()));
@@ -116,22 +116,18 @@ public class UserController {
     @NoAuth
     @ResponseBody
     @PostMapping("/sign-in")
-    public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq){
+    public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq) throws BaseException {
 
-        if(postLoginReq.getUser_id()== null){
+        if (postLoginReq.getUser_id() == null) {
             return new BaseResponse<>(POST_USERS_EMPTY_EMAIL);
         }
         //이메일 정규표현
-        if(!isRegexEmail(postLoginReq.getUser_id())){
+        if (!isRegexEmail(postLoginReq.getUser_id())) {
             return new BaseResponse<>(POST_USERS_INVALID_EMAIL);
         }
 
-        try{
-            PostLoginRes postLoginRes = userProvider.logIn(postLoginReq);
-            return new BaseResponse<>(postLoginRes);
-        } catch (BaseException exception){
-            return new BaseResponse<>(exception.getStatus());
-        }
+        PostLoginRes postLoginRes = userProvider.logIn(postLoginReq);
+        return new BaseResponse<>(postLoginRes);
     }
 
     /**
