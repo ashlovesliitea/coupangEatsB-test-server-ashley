@@ -23,6 +23,9 @@ public class GetStoreRes {
     private String store_owner_note;
     private Timestamp store_join_date;
     private int store_delivery_fee;
+    private double store_lng;
+    private double store_lat;
+    private double store_user_distance;
     private List<String>category_list;
     private List<String>store_img_url;
     private List<MenuCategory> menu_list_stored_by_category;

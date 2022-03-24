@@ -9,4 +9,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PostUserRes {
     private int userIdx;
+    private String user_name;
 }
