@@ -17,6 +17,12 @@ public class calculateDistanceByKilometer {
         return (dist);
     }
 
+    public static int estimateDeliveryTime(double dist){
+        int deliverySpeed=10;
+        int deliveryTime=(int)Math.ceil(dist/deliverySpeed*60);
+        System.out.println("deliveryTime = " + deliveryTime);
+        return deliveryTime;
+    }
 
 
     // This function converts decimal degrees to radians

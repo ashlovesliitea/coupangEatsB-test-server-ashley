@@ -30,7 +30,6 @@ public class OrderController {
      * [GET] /order/:orderIdx
      * @return BaseResponse<GetOrderRes>
      */
-    @NoAuth
     @ResponseBody
     @GetMapping("/{orderIdx}")
     public BaseResponse<GetOrderRes> getOrder(@PathVariable("orderIdx")int orderIdx) throws BaseException{

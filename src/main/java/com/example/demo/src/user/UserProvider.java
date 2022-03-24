@@ -57,17 +57,18 @@ public class UserProvider {
 
     }
 
-    public PostLoginRes logIn(PostLoginReq postLoginReq) throws BaseException{
+    public PostLoginRes logIn(PostLoginReq postLoginReq,String redirectURL) throws BaseException{
         User user = userDao.getPwd(postLoginReq);
         String encryptPwd;
 
         encryptPwd=new SHA256().encrypt(postLoginReq.getUser_pw());
+        String redirect_url;
 
 
         if(user.getUser_pw().equals(encryptPwd)){
             int userIdx = user.getUser_idx();
             String jwt = jwtService.createJwt(userIdx);
-            return new PostLoginRes(userIdx,jwt);
+            return new PostLoginRes(userIdx,jwt,redirectURL);
         }
         else{
             throw new BaseException(FAILED_TO_LOGIN);

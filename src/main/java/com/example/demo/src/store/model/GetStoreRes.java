@@ -26,6 +26,10 @@ public class GetStoreRes {
     private double store_lng;
     private double store_lat;
     private double store_user_distance;
+    private int store_min_prep_time;
+    private int store_max_prep_time;
+    private int store_min_delivery_time;
+    private int store_max_delivery_time;
     private List<String>category_list;
     private List<String>store_img_url;
     private List<MenuCategory> menu_list_stored_by_category;

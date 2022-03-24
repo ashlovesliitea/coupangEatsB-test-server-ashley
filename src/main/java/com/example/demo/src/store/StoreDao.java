@@ -40,7 +40,7 @@ public class StoreDao {
                 rs.getDouble(3))
                 ,findCateParam);
 
-        List<StoreDist>storeIdxFilteredByLocationList=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+        List<StoreDist> storeIdxFilteredByLocationList=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
         List<GetStoreRes> storeListbyCate=new ArrayList<>();
 
         for(StoreDist storeDist:storeIdxFilteredByLocationList){
@@ -50,6 +50,26 @@ public class StoreDao {
         }
         return storeListbyCate;
 
+    }
+
+    public List<GetStoreRes> getEveryStoreList(int user_address_idx) {
+        String findEveryStoreQuery="SELECT Store.store_idx,Store.store_lng,Store.store_lat\n" +
+                "From Store";
+
+        List<StoreLocation> storeIdxList=this.jdbcTemplate.query(findEveryStoreQuery,
+                (rs,rowNum)->new StoreLocation(
+                        rs.getInt(1),
+                        rs.getDouble(2),
+                        rs.getDouble(3)));
+
+        List <StoreDist> everyStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+
+        List<GetStoreRes> everyStoreList=new ArrayList<>();
+        for(StoreDist storeDist:everyStoreListFilteredByLocation){
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            everyStoreList.add(getStoreRes);
+        }
+        return everyStoreList;
     }
 
     public List<StoreDist> getStoreListFilteredByLocation(List <StoreLocation> storeIdxList, int user_address_idx){
@@ -112,7 +132,6 @@ public class StoreDao {
 
         for (String menuCateName : menuCategoryList) {
             //식당에서 설정한 메뉴 카테고리 별로 포함된 메뉴 리스트 출력
-            System.out.println("menuCateName = " + menuCateName);
             String findMenuListQuery = "SELECT menu_idx,menu_name,menu_details\n" +
                     "From menu\n" +
                     "INNER JOIN (SELECT store_idx FROM Store) S ON menu.store_idx=S.store_idx\n" +
@@ -135,7 +154,7 @@ public class StoreDao {
                 (rs, rowNum) -> rs.getString(1), store_idx);
 
         String findStoreInfoQuery = "SELECT store_name,store_min_order,CONCAT_WS(' ',store_siNm,store_sggNm,store_emdNm,store_streetNm,store_detailNm) AS store_address,store_phone,\n" +
-                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng\n" +
+                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng,store_min_prep_time,store_max_prep_time\n" +
                 "From Store\n" +
                 "Where Store.store_idx=? ";
 
@@ -154,14 +173,70 @@ public class StoreDao {
                     int store_delivery_fee = rs.getInt("store_delivery_fee");
                     double store_lat=rs.getDouble("store_lat");
                     double store_lng=rs.getDouble("store_lng");
+                    int store_min_prep_time=rs.getInt("store_min_prep_time");
+                    int store_max_prep_time=rs.getInt("store_max_prep_time");
+                    int delivery_time=estimateDeliveryTime(storeDist.getStore_user_dist());
+                    int store_min_delivery_time =store_min_prep_time+delivery_time;
+                    int store_max_delivery_time=store_max_prep_time+delivery_time;
                     GetStoreRes gSR = new GetStoreRes(store_idx, store_name, store_min_order, store_address, store_phone, store_owner,
                             store_reg_num, store_buisness_hour, store_info, store_owner_note, store_join_date, store_delivery_fee,
-                            store_lat,store_lng,storeDist.getStore_user_dist(),storeCateList, imageURLList, menuListSortedByCategory);
+                            store_lat,store_lng,storeDist.getStore_user_dist(),store_min_prep_time,store_max_prep_time
+                            ,store_min_delivery_time,store_max_delivery_time,storeCateList, imageURLList, menuListSortedByCategory);
                     return gSR;
 
                 }, store_idx);
 
 
+        return getStoreRes;
+    }
+
+
+    public List<GetStoreRes> getNewestStoreList(int user_address_idx) {
+
+        String findNewestStoreQuery="SELECT Store.store_idx,Store.store_lng,Store.store_lat\n" +
+                "From Store\n"
+                +"Where Store.store_join_date BETWEEN date_add(now(),interval -1 month) and now();";
+
+        List<StoreLocation> storeIdxList=this.jdbcTemplate.query(findNewestStoreQuery,
+                (rs,rowNum)->new StoreLocation(
+                        rs.getInt(1),
+                        rs.getDouble(2),
+                        rs.getDouble(3)));
+
+        List <StoreDist> newestStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+
+        List<GetStoreRes> newestStoreList=new ArrayList<>();
+        for(StoreDist storeDist:newestStoreListFilteredByLocation){
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            newestStoreList.add(getStoreRes);
+        }
+        return newestStoreList;
+    }
+
+    public GetStoreRes getStoreInfo(int user_address_idx, int store_idx) {
+        String findStoreQuery="SELECT Store.store_idx,Store.store_lng,Store.store_lat\n" +
+                "From Store Where store_idx=?";
+
+        StoreLocation storeLocation=this.jdbcTemplate.queryForObject(findStoreQuery,
+                (rs,rowNum)->new StoreLocation(
+                        rs.getInt(1),
+                        rs.getDouble(2),
+                        rs.getDouble(3)),store_idx);
+
+        String findUsrLngQuery="select user_address_lng,user_address_lat from User_Address where user_address_idx=?";
+        double[] usrLocation= this.jdbcTemplate.queryForObject(findUsrLngQuery,
+                (rs,rowNum)->{
+                    double userLng=rs.getDouble(1);
+                    double userLat=rs.getDouble(2);
+                    double[] location={userLng,userLat};
+                    return location;
+                },user_address_idx);
+        double user_lng= usrLocation[0];
+        double user_lat= usrLocation[1];
+
+        double dist= distance(user_lat,user_lng, storeLocation.getStore_lat(), storeLocation.getStore_lng());
+        StoreDist storeDist=new StoreDist(store_idx,dist);
+        GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
         return getStoreRes;
     }
 }
