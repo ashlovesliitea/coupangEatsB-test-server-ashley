@@ -114,7 +114,7 @@ public class UserController {
     @NoAuth
     @ResponseBody
     @PostMapping("/sign-in")
-    public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq) throws BaseException {
+    public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq,@RequestParam(required = false)String redirectURL) throws BaseException {
 
         if (postLoginReq.getUser_id() == null) {
             return new BaseResponse<>(POST_USERS_EMPTY_EMAIL);
@@ -123,8 +123,15 @@ public class UserController {
         if (!isRegexEmail(postLoginReq.getUser_id())) {
             return new BaseResponse<>(POST_USERS_INVALID_EMAIL);
         }
+        String redirect_url;
+        if(redirectURL==null){
+            redirect_url="/app/stores";
+        }
+        else{
+            redirect_url=redirectURL;
+        }
 
-        PostLoginRes postLoginRes = userProvider.logIn(postLoginReq);
+        PostLoginRes postLoginRes = userProvider.logIn(postLoginReq,redirect_url);
         return new BaseResponse<>(postLoginRes);
     }
 

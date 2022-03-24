@@ -24,4 +24,19 @@ public class StoreProvider {
         List<GetStoreRes> getStoreListByCategory=storeDao.getStoresByCategory(user_address_idx,category);
         return getStoreListByCategory;
     }
+
+    public List<GetStoreRes> getEveryStoreList(int user_address_idx) {
+        List<GetStoreRes> getEveryStoreList=storeDao.getEveryStoreList(user_address_idx);
+        return getEveryStoreList;
+    }
+
+    public List<GetStoreRes> getNewestStoreList(int user_address_idx) {
+        List<GetStoreRes> newestStoreList=storeDao.getNewestStoreList(user_address_idx);
+        return newestStoreList;
+    }
+
+    public GetStoreRes getStoreInfo(int user_address_idx, int store_idx) {
+        GetStoreRes getStoreRes=storeDao.getStoreInfo(user_address_idx,store_idx);
+        return getStoreRes;
+    }
 }

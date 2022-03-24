@@ -32,7 +32,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         }catch(BaseException e){
             String requestURI=request.getRequestURI();
             Map<String,String> map=new HashMap<>();
-            map.put("requestURI","/app/users/auth?redirectURL="+requestURI);
+            map.put("requestURI","/app/users/sign-in?redirectURL="+requestURI);
             String json=objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
             response.getWriter().write(json);
             return false;

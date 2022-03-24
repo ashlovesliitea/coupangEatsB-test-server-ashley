@@ -11,4 +11,5 @@ public class PostLoginRes {
 
     private int userIdx;
     private String jwt;
+    private String redirect_uri;
 }
