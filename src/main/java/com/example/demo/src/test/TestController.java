@@ -1,8 +1,11 @@
 package com.example.demo.src.test;
 
+import com.example.demo.annotation.NoAuth;
+import org.aspectj.weaver.ast.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -14,7 +17,12 @@ public class TestController {
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public TestController() {}
+    public TestController(TestDao testDao) {
+        this.testDao = testDao;
+    }
+
+    private TestDao testDao;
+
 
     /**
      * 로그 테스트 API
@@ -39,4 +47,11 @@ public class TestController {
 
         return "Success Test";
     }
+    @NoAuth
+    @ResponseBody
+    @GetMapping("/DB")
+    public void testDB(){
+        testDao.DBTest();
+    }
 }
+
