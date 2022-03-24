@@ -20,39 +20,7 @@ public class OrderDao {
     public void setDataSource(DataSource dataSource){this.jdbcTemplate=new JdbcTemplate(dataSource);}
 
     public GetOrderRes getOrder(int orderIdx){
-       String getOrderedMenuListQuery="Select od.order_detail_idx,menu.menu_name,od.menu_amount " +
-               "FROM order_detail od " +
-               "INNER JOIN order_list ol ON od.order_idx=ol.order_idx " +
-               "INNER JOIN menu ON od.menu_idx=menu.menu_idx " +
-               "WHERE ol.order_idx = ?";
-
-       int orderedMenuParam=orderIdx;
-
-       List<Integer>orderedDetailIdxList=new ArrayList<>();
-       List<Integer>orderedMenuAmountList=new ArrayList<>();
-       List<String>orderedMenuList=
-               this.jdbcTemplate.query(getOrderedMenuListQuery,
-                       (rs,rowNum)->{
-                        int idx=rs.getInt("order_detail_idx");
-                        orderedDetailIdxList.add(idx);
-                        String menuName=rs.getString("menu_name");
-                        int menuAmount=rs.getInt("menu_amount");
-                        orderedMenuAmountList.add(menuAmount);
-                        return menuName;
-                       },orderedMenuParam);
-
-       List<OrderDetail>orderDetailList=new ArrayList<>();
-       int detailListLen=orderedDetailIdxList.size();
-       for(int i=0;i<detailListLen;i++){
-
-           String orderedMenu=orderedMenuList.get(i);
-           int orderedAmount=orderedMenuAmountList.get(i);
-           int orderDetailIdx=orderedDetailIdxList.get(i);
-           List<String>orderedOptionList=getOptionList(orderDetailIdx);
-           OrderDetail orderDetail=new OrderDetail(orderedMenu,orderedAmount,orderedOptionList);
-           orderDetailList.add(orderDetail);
-           System.out.println("---------");
-       }
+       List<OrderDetail>orderDetailList=getOrderDetailList(orderIdx);
         String getOrderListQuery="SELECT User.user_name,CONCAT_WS(' ',UA.siNm,UA.sggNm,UA.emdNm,UA.streetNm,UA.detailNm) AS user_address,\n" +
                 "\t\tStore.store_name,ol.order_request_store,ol.order_request_delivery,ol.discount,\n" +
                 "        UP.payment_name,ol.order_date\n" +
@@ -82,7 +50,46 @@ public class OrderDao {
 
     }
 
+    public List<OrderDetail> getOrderDetailList(int orderIdx){
+        //주문한 메뉴+옵션 조합 리스트 출력 (상세 주문내역)
+        String getOrderedMenuListQuery="Select od.order_detail_idx,menu.menu_name,od.menu_amount " +
+                "FROM order_detail od " +
+                "INNER JOIN order_list ol ON od.order_idx=ol.order_idx " +
+                "INNER JOIN menu ON od.menu_idx=menu.menu_idx " +
+                "WHERE ol.order_idx = ?";
+
+        int orderedMenuParam=orderIdx;
+
+        List<Integer>orderedDetailIdxList=new ArrayList<>();
+        List<Integer>orderedMenuAmountList=new ArrayList<>();
+        List<String>orderedMenuList=
+                this.jdbcTemplate.query(getOrderedMenuListQuery,
+                        (rs,rowNum)->{
+                            int idx=rs.getInt("order_detail_idx");
+                            orderedDetailIdxList.add(idx);
+                            String menuName=rs.getString("menu_name");
+                            int menuAmount=rs.getInt("menu_amount");
+                            orderedMenuAmountList.add(menuAmount);
+                            return menuName;
+                        },orderedMenuParam);
+
+        List<OrderDetail>orderDetailList=new ArrayList<>();
+        int detailListLen=orderedDetailIdxList.size();
+        for(int i=0;i<detailListLen;i++){
+
+            String orderedMenu=orderedMenuList.get(i);
+            int orderedAmount=orderedMenuAmountList.get(i);
+            int orderDetailIdx=orderedDetailIdxList.get(i);
+            List<String>orderedOptionList=getOptionList(orderDetailIdx);
+            OrderDetail orderDetail=new OrderDetail(orderedMenu,orderedAmount,orderedOptionList);
+            orderDetailList.add(orderDetail);
+        }
+
+        return orderDetailList;
+    }
+
     public List<String> getOptionList(int orderDetailIdx){
+        //주문한 메뉴에 포함된 옵션 이름 리스트 출력
         String getOrderDetailOptionListQuery="SELECT mo.option_name\n" +
                 "FROM order_detail od\n" +
                 "INNER JOIN order_detail_option odo\n" +

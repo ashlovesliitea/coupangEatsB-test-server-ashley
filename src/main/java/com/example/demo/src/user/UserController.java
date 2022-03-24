@@ -34,6 +34,7 @@ public class UserController {
         this.userService = userService;
         this.jwtService = jwtService;
     }
+    //TODO- UserController try-catch문 전부 삭제할것
 
     /**
      * 회원 조회 API
