@@ -1,11 +1,11 @@
 package com.example.demo.src.store;
 
 import com.example.demo.annotation.NoAuth;
-import com.example.demo.src.store.model.GetStoreReq;
-import com.example.demo.src.store.model.GetStoreRes;
+import com.example.demo.src.store.model.*;
 import com.example.demo.utils.JwtService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -32,6 +32,8 @@ public class StoreController{
             return getStoreListByCategory;}
            else if(search_query!=null){
                System.out.println("search_query = " + search_query);
+               List<GetStoreRes> getStoreListByKeyword=storeProvider.getStoresByKeyword(user_address_idx,search_query);
+               return getStoreListByKeyword;
             }
            //user-address-idx만 들어왔을 때
                List<GetStoreRes>  everyStoreList=storeProvider.getEveryStoreList(user_address_idx);
@@ -55,5 +57,24 @@ public class StoreController{
                                     ,@PathVariable("storeIdx")int store_idx){
         GetStoreRes storeInfo=storeProvider.getStoreInfo(user_address_idx,store_idx);
         return storeInfo;
+    }
+
+    @ResponseBody
+    @GetMapping("/{storeIdx}/menus/{menuIdx}")
+    public GetMenuRes getMenu(@PathVariable("storeIdx")int store_idx, @PathVariable("menuIdx")int menu_idx){
+       GetMenuRes getMenuRes=storeProvider.getMenuAndOption(menu_idx);
+        return getMenuRes;
+    }
+
+    @ResponseBody
+    @GetMapping("{storeIdx}/reviews")
+    public List<GetReviewRes> getReviewFromStores(@PathVariable("storeIdx")int store_idx){
+       List<Review> reviewList=storeProvider.getReviewFromStores(store_idx);
+       List<GetReviewRes> getReviewResList=new ArrayList<>();
+       for(Review review :reviewList){
+           GetReviewRes getReviewRes=new GetReviewRes(review);
+           getReviewResList.add(getReviewRes);
+       }
+       return getReviewResList;
     }
 }

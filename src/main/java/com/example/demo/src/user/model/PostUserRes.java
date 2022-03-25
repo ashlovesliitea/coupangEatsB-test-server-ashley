@@ -10,4 +10,5 @@ import lombok.Setter;
 public class PostUserRes {
     private int userIdx;
     private String user_name;
+    private String jwt;
 }

@@ -1,7 +1,9 @@
 package com.example.demo.src.store;
 
+import com.example.demo.src.store.model.GetMenuRes;
 import com.example.demo.src.store.model.GetStoreReq;
 import com.example.demo.src.store.model.GetStoreRes;
+import com.example.demo.src.store.model.Review;
 import com.example.demo.utils.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,5 +40,20 @@ public class StoreProvider {
     public GetStoreRes getStoreInfo(int user_address_idx, int store_idx) {
         GetStoreRes getStoreRes=storeDao.getStoreInfo(user_address_idx,store_idx);
         return getStoreRes;
+    }
+
+    public List<GetStoreRes> getStoresByKeyword(int user_address_idx, String search_query) {
+        List<GetStoreRes> storeListByKeyword=storeDao.getstoresByKeyword(user_address_idx,search_query);
+        return storeListByKeyword;
+    }
+
+    public GetMenuRes getMenuAndOption(int menu_idx) {
+        GetMenuRes getMenuRes=storeDao.getMenuAndOption(menu_idx);
+        return getMenuRes;
+    }
+
+    public List<Review> getReviewFromStores(int store_idx) {
+        List<Review> review =storeDao.getReviewFromStores(store_idx);
+        return review;
     }
 }
