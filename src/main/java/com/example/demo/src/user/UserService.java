@@ -46,7 +46,8 @@ public class UserService {
             System.out.println("pwd = " + pwd);
 
             int userIdx = userDao.createUser(postUserReq);
-            return new PostUserRes(userIdx,postUserReq.getUser_name());
+            String jwt=jwtService.createJwt(userIdx);
+            return new PostUserRes(userIdx,postUserReq.getUser_name(),jwt);
 
     }
 
