@@ -10,5 +10,6 @@ import lombok.Setter;
 public class Menu {
     private int menu_idx;
     private String menu_name;
+    private int menu_price;
     private String menu_detail;
 }

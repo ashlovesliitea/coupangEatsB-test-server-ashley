@@ -9,7 +9,9 @@ import static com.example.demo.utils.calculateDistanceByKilometer.*;
 import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class StoreDao {
@@ -72,6 +74,31 @@ public class StoreDao {
         return everyStoreList;
     }
 
+    public List<GetStoreRes> getstoresByKeyword(int user_address_idx, String search_query) {
+        //keyword= 메뉴 이름, 식당 이름
+        String keyword="%"+search_query+"%";
+        String getStoresByKeywordQuery="SELECT distinct Store.store_idx, Store.store_lng,Store.store_lat\n" +
+                "\t\tFrom Store\n" +
+                "\tInner join menu ON Store.store_idx=menu.store_idx\n" +
+                "    Where Store.store_name Like ? OR menu.menu_name Like ?";
+
+        Object[] keywordParams={keyword,keyword};
+        List<StoreLocation> storeIdxList=this.jdbcTemplate.query(getStoresByKeywordQuery,
+                (rs,rowNum)->new StoreLocation(
+                        rs.getInt(1),
+                        rs.getDouble(2),
+                        rs.getDouble(3)),keywordParams);
+
+        List <StoreDist> keywordStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+
+        List<GetStoreRes> storeListFilteredByKeyword=new ArrayList<>();
+        for(StoreDist storeDist:keywordStoreListFilteredByLocation){
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            storeListFilteredByKeyword.add(getStoreRes);
+        }
+        return storeListFilteredByKeyword;
+    }
+
     public List<StoreDist> getStoreListFilteredByLocation(List <StoreLocation> storeIdxList, int user_address_idx){
         List<StoreDist>storeIdxListFilteredByLocation=new ArrayList<>();
         for(StoreLocation storeLocation :storeIdxList){
@@ -97,6 +124,8 @@ public class StoreDao {
         }
         return storeIdxListFilteredByLocation;
     }
+
+
 
     public GetStoreRes getWholeStoreInfo(StoreDist storeDist) {
         int store_idx= storeDist.getStore_idx();
@@ -132,7 +161,7 @@ public class StoreDao {
 
         for (String menuCateName : menuCategoryList) {
             //식당에서 설정한 메뉴 카테고리 별로 포함된 메뉴 리스트 출력
-            String findMenuListQuery = "SELECT menu_idx,menu_name,menu_details\n" +
+            String findMenuListQuery = "SELECT menu_idx,menu_name,menu_price,menu_details\n" +
                     "From menu\n" +
                     "INNER JOIN (SELECT store_idx FROM Store) S ON menu.store_idx=S.store_idx\n" +
                     "INNER JOIN menu_category mc ON  menu.menu_category_idx=mc.menu_category_idx\n" +
@@ -142,7 +171,8 @@ public class StoreDao {
                     (rs, rowNum) -> new Menu(
                             rs.getInt(1),
                             rs.getString(2),
-                            rs.getString(3)
+                            rs.getInt(3),
+                            rs.getString(4)
                     ), menuParams);
 
             menuListSortedByCategory.add(new MenuCategory(menuCateName, menuList));
@@ -238,6 +268,179 @@ public class StoreDao {
         StoreDist storeDist=new StoreDist(store_idx,dist);
         GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
         return getStoreRes;
+    }
+
+
+    public GetMenuRes getMenuAndOption(int menu_idx) {
+        String getMenuQuery="Select menu_name,menu_price,menu_details from menu where menu_idx=?";
+         String getOptionQuery= "Select option_idx,option_name,option_additional_price From menu_option where menu_idx=?";
+        int menuParams=menu_idx;
+
+        Menu menu=this.jdbcTemplate.queryForObject(getMenuQuery,
+                (rs,rowNum)->{
+                     String menu_name=rs.getString(1);
+                     int menu_price=rs.getInt(2);
+                     String menu_details=rs.getString(3);
+                     Menu menu1= new Menu(menu_idx,menu_name,menu_price,menu_details);
+
+                      return menu1;
+
+                },menuParams);
+
+        List<Option> optionList= this.jdbcTemplate.query(getOptionQuery,
+                (rs,rowNum)->{
+                    int option_idx=rs.getInt(1);
+                    String option_name=rs.getString(2);
+                    int option_additional_price=rs.getInt(3);
+                    Option option1=new Option(option_idx,option_name,option_additional_price);
+                    return option1;
+                },menuParams);
+         GetMenuRes getMenuRes= new GetMenuRes(menu,optionList);
+        return getMenuRes;
+    }
+
+    public List<Review> getReviewFromStores(int store_idx) {
+        String findReviewIdxListQuery="Select review_idx from review Where store_idx=?";
+        List <Integer> reviewIdxList= this.jdbcTemplate.query(findReviewIdxListQuery,
+                (rs,rowNum)->rs.getInt(1),store_idx);
+
+        List<Review> reviewListFromStores=new ArrayList<>();
+
+        for(int reviewIdx:reviewIdxList){
+        String findOrderIdxQuery="Select order_idx From review Where review_idx=?";
+        int orderIdx=this.jdbcTemplate.queryForObject(findOrderIdxQuery,
+                (rs,rowNum)->rs.getInt(1),reviewIdx);
+            System.out.println("orderIdx = " + orderIdx);
+
+        String findMenuListQuery="Select menu.menu_name from order_detail Inner Join menu ON order_detail.menu_idx=menu.menu_idx Where order_detail.order_idx=? ";
+        List<String> menuList=this.jdbcTemplate.query(findMenuListQuery,
+                (rs,rowNum)->rs.getString(1),orderIdx);
+
+
+        //리뷰 사진이 존재하는지 여부 체크, 아니면 아래 list찾는 query에서 DataNotFoundException 발생
+        String reviewImgExistsQuery="select exists(select review_img_idx from review_img where review_idx=?)";
+        int reviewImgExists=this.jdbcTemplate.queryForObject(reviewImgExistsQuery,(rs,rowNum)->rs.getInt(1),reviewIdx);
+
+        List<String> reviewImgList= new ArrayList<>();
+
+        if(reviewImgExists==1){
+        String findReviewImgListQuery="select review_img_url from review_img where review_idx=?";
+        List<String> reviewImgList1=this.jdbcTemplate.query(findReviewImgListQuery,
+                (rs,rowNum)->rs.getString(1),reviewIdx);
+        reviewImgList.addAll(reviewImgList1);
+        }
+
+        String findReviewQuery="Select r.review_idx,r.user_idx,u.user_name,s.store_name,\n" +
+                "\tr.order_idx,r.ratings,r.review_comment\n" +
+                "From review r\n" +
+                "inner join User u on r.user_idx=u.user_idx\n" +
+                "inner join Store s on s.store_idx=r.store_idx\n" +
+                "Where r.review_idx=?";
+
+        Review review= this.jdbcTemplate.queryForObject(findReviewQuery,
+                (rs,rowNum)->{
+                    int review_idx=rs.getInt(1);
+                    int user_idx=rs.getInt(2);
+                    String user_name=rs.getString(3);
+                    int storeIdx=store_idx;
+                    String store_name=rs.getString(4);
+                    int order_idx=rs.getInt(5);
+                    int ratings=rs.getInt(6);
+                    String review_comment=rs.getString(7);
+                    System.out.println("review_comment = " + review_comment);
+                    Review review1=new Review(review_idx,user_idx,user_name,storeIdx,store_name,order_idx,ratings,review_comment,reviewImgExists,reviewImgList,menuList);
+                    return review1;
+                },reviewIdx);
+
+        reviewListFromStores.add(review);
+        }
+        return reviewListFromStores;
+
+    }
+
+    public int createStore(PostStoreReq postStoreReq) {
+        String lastInsertedIdxQuery="select max(store_idx) from Store";
+        int lastInsertedStoreid= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+        System.out.println(postStoreReq.getStore_owner_note());
+        String createStoreQuery="insert into Store(store_idx,store_name,store_min_order,store_siNm,store_sggNm,store_emdNm,store_streetNm,store_detailNm,store_phone," +
+                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lng,store_lat,store_min_prep_time,store_max_prep_time)" +
+                "Values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+        Object[] createStoreParam={lastInsertedStoreid+1,postStoreReq.getStore_name(),postStoreReq.getStore_min_order(),postStoreReq.getStore_siNm(),postStoreReq.getStore_sggNm()
+                ,postStoreReq.getStore_emdNm(), postStoreReq.getStore_streetNm(),postStoreReq.getStore_detailNm(),postStoreReq.getStore_phone(),postStoreReq.getStore_owner(),
+        postStoreReq.getStore_reg_num(),postStoreReq.getStore_buisness_hour(),postStoreReq.getStore_info(),postStoreReq.getStore_owner_note(),
+        new Timestamp(System.currentTimeMillis()),postStoreReq.getStore_delivery_fee(),postStoreReq.getStore_lng(),postStoreReq.getStore_lat(),
+        postStoreReq.getStore_min_prep_time(),postStoreReq.getStore_max_prep_time()};
+
+        this.jdbcTemplate.update(createStoreQuery,createStoreParam);
+
+        lastInsertedStoreid=this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+
+        for(int cate_idx:postStoreReq.getCategory_list()){
+            String lastInsertedStoreCateQuery="select max(store_cate_idx) from store_cate";
+            int lastInsertedStoreCateid= this.jdbcTemplate.queryForObject(lastInsertedStoreCateQuery,int.class);
+            System.out.println("lastInsertedStoreCateid = " + lastInsertedStoreCateid);
+            String insertStoreCateQuery="insert into store_cate(store_cate_idx,store_idx,cate_idx) Values(?,?,?)";
+            Object[] storeCateParams={lastInsertedStoreCateid+1,lastInsertedStoreid,cate_idx};
+            this.jdbcTemplate.update(insertStoreCateQuery,storeCateParams);
+        }
+
+        int lastInsertedStoreImgid=0;
+
+        for(String img_url:postStoreReq.getStore_img_url()){
+
+            String lastInsertedStoreImgQuery="select max(store_img_idx) from store_img";
+            lastInsertedStoreImgid= this.jdbcTemplate.queryForObject(lastInsertedStoreImgQuery,int.class);
+            String insertStoreImgQuery="insert into store_img(store_img_idx,store_idx,store_img_url) Values(?,?,?)";
+
+            Object[] storeImgParams={lastInsertedStoreImgid+1,lastInsertedStoreid,img_url};
+            this.jdbcTemplate.update(insertStoreImgQuery,storeImgParams);
+        }
+        System.out.println("lastInsertedStoreImgid = " + lastInsertedStoreImgid);
+        return lastInsertedStoreImgid;
+
+
+    }
+
+    public int createMenuCategory(int store_idx, PostMenuCategoryReq postMenuCategoryReq) {
+        String lastInsertedIdxQuery="select max(menu_category_idx) from menu_category";
+        int lastInsertedid= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+        String createMenuCateQuery="insert into menu_category(menu_category_idx,menu_category_name,store_idx) Values(?,?,?)";
+        Object[] createMenuCateParam={lastInsertedid+1,postMenuCategoryReq.getMenu_category_name(),store_idx};
+
+        return this.jdbcTemplate.update(createMenuCateQuery,createMenuCateParam);
+    }
+
+    public int createMenu(int store_idx, PostMenuReq postMenuReq) {
+        String lastInsertedIdxQuery="select max(menu_idx) from menu";
+        int lastInsertedMenuidx= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+        String createMenuQuery="insert into menu(menu_idx,store_idx,menu_name,menu_price,menu_details) Values(?,?,?,?,?)";
+        Object[] createMenuParam={lastInsertedMenuidx+1,store_idx,postMenuReq.getMenu_name(),postMenuReq.getMenu_price(),postMenuReq.getMenu_details()};
+
+        lastInsertedMenuidx= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+        int menuInsertedCheck=this.jdbcTemplate.update(createMenuQuery,createMenuParam);
+
+
+        int lastInsertedid=0;
+        if(menuInsertedCheck!=0){
+            for(int menu_cate:postMenuReq.getMenu_cate_list()){
+                String lastInsertedIdQuery="select max(menu_category_idx) from menu_category_relation";
+                lastInsertedid= this.jdbcTemplate.queryForObject(lastInsertedIdQuery,int.class);
+                String createMenuCateRelationQuery="insert into menu_category_relation(menu_category_relation_idx,menu_idx,menu_category_idx) values(?,?,?)";
+                Object[] createMenuCateRelationParams={lastInsertedid+1,lastInsertedMenuidx,menu_cate};
+                this.jdbcTemplate.update(createMenuCateRelationQuery,createMenuCateRelationParams);
+            }
+        }
+        return lastInsertedid;
+    }
+
+    public int createOption(int menu_idx, PostOptionReq postOptionReq) {
+        String lastInsertedIdxQuery="select max(menu_option_idx) from menu_option";
+        int lastInsertedOptionidx= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+        String createOptionQuery="insert into menu(menu_option_idx,menu_idx,option_name,option_additional_price) Values(?,?,?,?)";
+        Object[] optionParams={lastInsertedOptionidx+1,menu_idx,postOptionReq.getOption_name(),postOptionReq.getOption_additional_price()};
+
+        return this.jdbcTemplate.update(createOptionQuery,optionParams);
     }
 }
 

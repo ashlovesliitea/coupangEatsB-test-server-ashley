@@ -1,11 +1,13 @@
 package com.example.demo.src.store;
 
 import com.example.demo.annotation.NoAuth;
-import com.example.demo.src.store.model.GetStoreReq;
-import com.example.demo.src.store.model.GetStoreRes;
+import com.example.demo.config.BaseResponse;
+import com.example.demo.config.BaseResponseStatus;
+import com.example.demo.src.store.model.*;
 import com.example.demo.utils.JwtService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -24,18 +26,20 @@ public class StoreController{
 
     @ResponseBody
     @GetMapping("")
-    public List<GetStoreRes> getStoreList(@RequestParam(value="user-address-idx",required=false) int user_address_idx
-                                        ,@RequestParam(value="category",required=false) String category
-                                        ,@RequestParam(value="q",required = false)String search_query){
+    public BaseResponse<List<GetStoreRes>> getStoreList(@RequestParam(value="user-address-idx",required=false) int user_address_idx
+                                        , @RequestParam(value="category",required=false) String category
+                                        , @RequestParam(value="q",required = false)String search_query){
            if(category!=null){
             List<GetStoreRes> getStoreListByCategory=storeProvider.getStoresByCategory(user_address_idx,category);
-            return getStoreListByCategory;}
+            return new BaseResponse<>(getStoreListByCategory);}
            else if(search_query!=null){
                System.out.println("search_query = " + search_query);
+               List<GetStoreRes> getStoreListByKeyword=storeProvider.getStoresByKeyword(user_address_idx,search_query);
+               return new BaseResponse<>(getStoreListByKeyword);
             }
            //user-address-idx만 들어왔을 때
                List<GetStoreRes>  everyStoreList=storeProvider.getEveryStoreList(user_address_idx);
-               return everyStoreList;
+               return new BaseResponse<>(everyStoreList);
 
 
 
@@ -44,16 +48,88 @@ public class StoreController{
 
     @ResponseBody
     @GetMapping("/newest")
-    public List<GetStoreRes> getNewestStoreList(@RequestParam(value="user-address-idx",required=false) int user_address_idx){
+    public BaseResponse<List<GetStoreRes>> getNewestStoreList(@RequestParam(value="user-address-idx",required=false) int user_address_idx){
        List<GetStoreRes> newestStoreList=storeProvider.getNewestStoreList(user_address_idx);
-       return newestStoreList;
+       return new BaseResponse<>(newestStoreList);
     }
 
     @ResponseBody
     @GetMapping("/{storeIdx}")
-    public GetStoreRes getStoreInfo(@RequestParam(value="user-address-idx",required=false) int user_address_idx
+    public BaseResponse<GetStoreRes> getStoreInfo(@RequestParam(value="user-address-idx",required=false) int user_address_idx
                                     ,@PathVariable("storeIdx")int store_idx){
         GetStoreRes storeInfo=storeProvider.getStoreInfo(user_address_idx,store_idx);
-        return storeInfo;
+        return new BaseResponse<>(storeInfo);
+    }
+
+    @ResponseBody
+    @GetMapping("/{storeIdx}/menus/{menuIdx}")
+    public BaseResponse<GetMenuRes> getMenu(@PathVariable("storeIdx")int store_idx, @PathVariable("menuIdx")int menu_idx){
+       GetMenuRes getMenuRes=storeProvider.getMenuAndOption(menu_idx);
+        return new BaseResponse<>(getMenuRes);
+    }
+
+    @ResponseBody
+    @GetMapping("{storeIdx}/reviews")
+    public BaseResponse<List<GetReviewRes>> getReviewFromStores(@PathVariable("storeIdx")int store_idx){
+       List<Review> reviewList=storeProvider.getReviewFromStores(store_idx);
+       List<GetReviewRes> getReviewResList=new ArrayList<>();
+       for(Review review :reviewList){
+           GetReviewRes getReviewRes=new GetReviewRes(review);
+           getReviewResList.add(getReviewRes);
+       }
+       return new BaseResponse<>(getReviewResList);
+    }
+
+    @ResponseBody
+    @PostMapping("")
+    public BaseResponse<String> createStore(@RequestBody PostStoreReq postStoreReq){
+       int createStoreCheck=storeService.createStore(postStoreReq);
+       if(createStoreCheck!=0){
+           String result="";
+           return new BaseResponse<>(result);
+       }
+       else{
+           return new BaseResponse<>(BaseResponseStatus.FAIL_TO_CREATE_STORE);
+       }
+
+    }
+
+    @ResponseBody
+    @PostMapping("/{storeIdx}/menu-category")
+    public BaseResponse<String> createMenuCategory(@PathVariable("storeIdx")int store_idx,@RequestBody PostMenuCategoryReq postMenuCategoryReq){
+        int menuCateCheck=storeService.createMenuCategory(store_idx,postMenuCategoryReq);
+
+        if(menuCateCheck!=0){
+            String Result="";
+            return new BaseResponse<>(Result);}
+        else{
+            return new BaseResponse<>(BaseResponseStatus.FAIL_TO_CREATE_MENU_CATEGORY);
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/{storeIdx}/menu")
+    public BaseResponse<String> createMenu(@PathVariable("storeIdx")int store_idx,@RequestBody PostMenuReq postMenuReq){
+        int menuCateCheck=storeService.createMenu(store_idx,postMenuReq);
+
+        if(menuCateCheck!=0){
+            String Result="";
+            return new BaseResponse<>(Result);}
+        else{
+            return new BaseResponse<>(BaseResponseStatus.FAIL_TO_CREATE_MENU);
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/{storeIdx}/menu/{menuIdx}/option")
+    public BaseResponse<String> createOption(@PathVariable("storeIdx")int store_idx,@PathVariable("menuIdx")int menu_idx,@RequestBody PostOptionReq postOptionReq){
+        int optionCheck=storeService.createOption(menu_idx,postOptionReq);
+
+        if(optionCheck!=0){
+            String Result="";
+            return new BaseResponse<>(Result);}
+        else{
+            return new BaseResponse<>(BaseResponseStatus.FAIL_TO_CREATE_OPTION);
+        }
     }
 }
