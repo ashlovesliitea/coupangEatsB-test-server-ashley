@@ -4,6 +4,8 @@ import com.example.demo.annotation.NoAuth;
 import com.example.demo.config.BaseException;
 import com.example.demo.config.BaseResponse;
 import com.example.demo.src.order.model.GetOrderRes;
+import com.example.demo.src.order.model.PostOrderReq;
+import com.example.demo.src.order.model.PostOrderRes;
 import com.example.demo.utils.JwtService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,5 +39,19 @@ public class OrderController {
         GetOrderRes getOrderRes=orderProvider.getOrder(orderIdx);
         return new BaseResponse<>(getOrderRes);
 
+    }
+
+    /**
+     * 주문 전송 API
+     * [POST] /order
+     * @return BaseResponse<String>
+     */
+    @ResponseBody
+    @PostMapping("")
+    public BaseResponse<PostOrderRes> createOrder(@RequestBody PostOrderReq postOrderReq){
+        System.out.println("postOrderReq = " + postOrderReq.getOrder_detail_list().get(0).getMenu_idx());
+        int createOrderCheck=orderService.createOrder(postOrderReq);
+        PostOrderRes postOrderRes=new PostOrderRes(createOrderCheck);
+        return new BaseResponse<>(postOrderRes);
     }
 }

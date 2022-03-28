@@ -6,12 +6,12 @@ import lombok.Setter;
 
 import java.util.List;
 
+
 @Getter
 @Setter
 @AllArgsConstructor
-public class OrderDetail {
-    private String menu_name;
+public class Details {
+    private int menu_idx;
     private int menu_amount;
-    private List<String>option_list;
-    private int order_detail_total;
+    private List<Integer> option_list;
 }
