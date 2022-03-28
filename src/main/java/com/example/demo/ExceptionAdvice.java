@@ -53,7 +53,7 @@ public class ExceptionAdvice {
 
     @ExceptionHandler(value=Exception.class)
     public void EtcExceptionHandler(Exception e){
-        System.err.println(e.getClass());
+        System.err.println(e);
     }
 
 }

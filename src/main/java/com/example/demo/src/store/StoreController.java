@@ -3,7 +3,11 @@ package com.example.demo.src.store;
 import com.example.demo.annotation.NoAuth;
 import com.example.demo.config.BaseResponse;
 import com.example.demo.config.BaseResponseStatus;
-import com.example.demo.src.store.model.*;
+import com.example.demo.src.store.model.entity.Review;
+import com.example.demo.src.store.model.request.*;
+import com.example.demo.src.store.model.response.GetMenuRes;
+import com.example.demo.src.store.model.response.GetReviewRes;
+import com.example.demo.src.store.model.response.GetStoreRes;
 import com.example.demo.utils.JwtService;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +34,7 @@ public class StoreController{
                                         , @RequestParam(value="category",required=false) String category
                                         , @RequestParam(value="q",required = false)String search_query){
            if(category!=null){
+               System.out.println("category = " + category);
             List<GetStoreRes> getStoreListByCategory=storeProvider.getStoresByCategory(user_address_idx,category);
             return new BaseResponse<>(getStoreListByCategory);}
            else if(search_query!=null){
@@ -40,8 +45,6 @@ public class StoreController{
            //user-address-idx만 들어왔을 때
                List<GetStoreRes>  everyStoreList=storeProvider.getEveryStoreList(user_address_idx);
                return new BaseResponse<>(everyStoreList);
-
-
 
         }
 
@@ -62,7 +65,7 @@ public class StoreController{
     }
 
     @ResponseBody
-    @GetMapping("/{storeIdx}/menus/{menuIdx}")
+    @GetMapping("/{storeIdx}/menu/{menuIdx}")
     public BaseResponse<GetMenuRes> getMenu(@PathVariable("storeIdx")int store_idx, @PathVariable("menuIdx")int menu_idx){
        GetMenuRes getMenuRes=storeProvider.getMenuAndOption(menu_idx);
         return new BaseResponse<>(getMenuRes);
@@ -94,9 +97,13 @@ public class StoreController{
 
     }
 
+    @NoAuth
     @ResponseBody
     @PostMapping("/{storeIdx}/menu-category")
-    public BaseResponse<String> createMenuCategory(@PathVariable("storeIdx")int store_idx,@RequestBody PostMenuCategoryReq postMenuCategoryReq){
+    public BaseResponse<String> createMenuCategory(@PathVariable("storeIdx") int store_idx
+            ,@RequestBody PostMenuCategoryReq postMenuCategoryReq){
+        System.out.print(store_idx);
+        System.out.println("menu_category_name = " + postMenuCategoryReq.getMenu_category_name());
         int menuCateCheck=storeService.createMenuCategory(store_idx,postMenuCategoryReq);
 
         if(menuCateCheck!=0){
@@ -131,5 +138,34 @@ public class StoreController{
         else{
             return new BaseResponse<>(BaseResponseStatus.FAIL_TO_CREATE_OPTION);
         }
+    }
+
+    //상점 정보 수정 API
+    @ResponseBody
+    @PatchMapping("/{storeIdx}")
+    public BaseResponse<String> modifyStoreInfo(@PathVariable("storeIdx")int store_idx, @RequestBody PatchStoreReq patchStoreReq){
+        storeService.modifyStoreInfo(store_idx,patchStoreReq);
+        String Result="";
+        return new BaseResponse<>(Result);
+    }
+
+    //메뉴 수정 API
+    @ResponseBody
+    @PatchMapping("/{storeIdx}/menu/{menuIdx}")
+    public BaseResponse<String> modifyMenu(@PathVariable("storeIdx") int store_idx, @PathVariable("menuIdx") int menu_idx, @RequestBody PatchMenuReq patchMenuReq){
+        storeService.modifyMenu(menu_idx,patchMenuReq);
+        String Result="";
+        return new BaseResponse<>(Result);
+    }
+
+    //옵션 수정 API
+    @ResponseBody
+    @PatchMapping("/{storeIdx}/menu/{menuIdx}/option/{optionIdx}")
+    public BaseResponse<String> modifyOption(@PathVariable("storeIdx") int store_idx, @PathVariable("menuIdx") int menu_idx
+            ,@PathVariable("optionIdx") int option_idx, @RequestBody PatchOptionReq patchOptionReq){
+
+        storeService.modifyOption(option_idx,patchOptionReq);
+        String Result="";
+        return new BaseResponse<>(Result);
     }
 }

@@ -1,5 +1,6 @@
-package com.example.demo.src.store.model;
+package com.example.demo.src.store.model.entity;
 
+import com.example.demo.src.store.model.entity.Menu;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
