@@ -186,8 +186,16 @@ public class StoreDao {
         List<String> imageURLList = this.jdbcTemplate.query(findImageURLListQuery,
                 (rs, rowNum) -> rs.getString(1), store_idx);
 
+        String findReviewRatingNumQuery="Select avg(ratings),count(review_idx) from review Where store_idx=?";
+        ReviewRatingNum reviewRatingNum=this.jdbcTemplate.queryForObject(findReviewRatingNumQuery,
+                (rs,rowNum)->{
+                        float ratings=rs.getFloat(1);
+                        int reviewNum=rs.getInt(2);
+                        return new ReviewRatingNum(ratings,reviewNum);
+                },store_idx);
+
         String findStoreInfoQuery = "SELECT store_name,store_min_order,CONCAT_WS(' ',store_siNm,store_sggNm,store_emdNm,store_streetNm,store_detailNm) AS store_address,store_phone,\n" +
-                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng,store_min_prep_time,store_max_prep_time\n" +
+                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng,store_min_prep_time,store_max_prep_time,store_pickup_status,store_cheetah_delivery\n" +
                 "From Store\n" +
                 "Where Store.store_idx=? ";
 
@@ -208,13 +216,15 @@ public class StoreDao {
                     double store_lng=rs.getDouble("store_lng");
                     int store_min_prep_time=rs.getInt("store_min_prep_time");
                     int store_max_prep_time=rs.getInt("store_max_prep_time");
+                    int store_pickup_status=rs.getInt("store_pickup_status");
+                    int store_cheetah_delivery=rs.getInt("store_cheetah_delivery");
                     int delivery_time=estimateDeliveryTime(storeDist.getStore_user_dist());
                     int store_min_delivery_time =store_min_prep_time+delivery_time;
                     int store_max_delivery_time=store_max_prep_time+delivery_time;
                     GetStoreRes gSR = new GetStoreRes(store_idx, store_name, store_min_order, store_address, store_phone, store_owner,
                             store_reg_num, store_buisness_hour, store_info, store_owner_note, store_join_date, store_delivery_fee,
                             store_lat,store_lng,storeDist.getStore_user_dist(),store_min_prep_time,store_max_prep_time
-                            ,store_min_delivery_time,store_max_delivery_time,storeCateList, imageURLList, menuListSortedByCategory);
+                            ,store_min_delivery_time,store_max_delivery_time,store_pickup_status,store_cheetah_delivery,reviewRatingNum.getReview_avg_rating(),reviewRatingNum.getReview_num(),storeCateList, imageURLList, menuListSortedByCategory);
                     return gSR;
 
                 }, store_idx);

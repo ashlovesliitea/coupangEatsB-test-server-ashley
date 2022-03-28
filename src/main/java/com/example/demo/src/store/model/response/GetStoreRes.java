@@ -31,6 +31,10 @@ public class GetStoreRes {
     private int store_max_prep_time;
     private int store_min_delivery_time;
     private int store_max_delivery_time;
+    private int store_pickup_status;
+    private int store_cheetah_delivery;
+    private float store_rating_avg;
+    private int store_review_num;
     private List<String>category_list;
     private List<String>store_img_url;
     private List<MenuCategory> menu_list_stored_by_category;
