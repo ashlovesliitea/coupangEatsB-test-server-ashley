@@ -1,16 +1,16 @@
-package com.example.demo.src.store.model;
+package com.example.demo.src.store.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @AllArgsConstructor
 @Getter
 @Setter
-public class PostStoreReq {
+public class PatchStoreReq {
     private String store_name;
     private int store_min_order;
     private String store_siNm;
@@ -31,4 +31,5 @@ public class PostStoreReq {
     private int store_max_prep_time;
     private List<Integer> category_list;
     private List<String>store_img_url;
+
 }

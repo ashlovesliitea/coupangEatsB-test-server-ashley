@@ -17,5 +17,5 @@ public class PostOrderReq {
     private String order_request_delivery;
     private int discount;
     private int payment_idx;
-    private List<OrderDetail> order_detail_list;
+    private List<Details> order_detail_list;
 }

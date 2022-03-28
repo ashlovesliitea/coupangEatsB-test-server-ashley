@@ -1,9 +1,8 @@
 package com.example.demo.src.store;
 
-import com.example.demo.src.store.model.GetMenuRes;
-import com.example.demo.src.store.model.GetStoreReq;
-import com.example.demo.src.store.model.GetStoreRes;
-import com.example.demo.src.store.model.Review;
+import com.example.demo.src.store.model.response.GetMenuRes;
+import com.example.demo.src.store.model.response.GetStoreRes;
+import com.example.demo.src.store.model.entity.Review;
 import com.example.demo.utils.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

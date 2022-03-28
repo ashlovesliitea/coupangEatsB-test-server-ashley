@@ -18,6 +18,7 @@ public class GetOrderRes {
     private String order_request_store;
     private String order_request_delivery;
     private int discount;
+    private int total_price;
     private String payment_name;
     private Timestamp order_date;
     private List<OrderDetail> order_detail_list;

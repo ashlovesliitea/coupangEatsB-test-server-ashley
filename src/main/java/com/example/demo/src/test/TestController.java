@@ -1,15 +1,13 @@
 package com.example.demo.src.test;
 
 import com.example.demo.annotation.NoAuth;
+import com.example.demo.src.test.model.GetTestRes;
 import org.aspectj.weaver.ast.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/test")
@@ -52,6 +50,13 @@ public class TestController {
     @GetMapping("/DB")
     public void testDB(){
         testDao.DBTest();
+    }
+
+    @NoAuth
+    @ResponseBody
+    @GetMapping("/dtotest")
+    public void testDto(@RequestBody GetTestRes getTestRes){
+        System.out.println("getTestRes.get = " + getTestRes.getTestString());
     }
 }
 

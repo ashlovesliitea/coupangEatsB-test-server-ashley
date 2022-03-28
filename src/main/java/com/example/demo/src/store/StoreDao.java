@@ -1,6 +1,9 @@
 package com.example.demo.src.store;
 
-import com.example.demo.src.store.model.*;
+import com.example.demo.src.store.model.entity.*;
+import com.example.demo.src.store.model.request.*;
+import com.example.demo.src.store.model.response.GetMenuRes;
+import com.example.demo.src.store.model.response.GetStoreRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -9,9 +12,7 @@ import static com.example.demo.utils.calculateDistanceByKilometer.*;
 import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Repository
 public class StoreDao {
@@ -22,7 +23,7 @@ public class StoreDao {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    public List<GetStoreRes> getStoresByCategory(int user_address_idx,String category){
+    public List<GetStoreRes> getStoresByCategory(int user_address_idx, String category){
         System.out.println("user_address_idx = " + user_address_idx);
         System.out.println("category = "+category);
         String StoreListByCateQuery="SELECT Store.store_idx,Store.store_lng,Store.store_lat\n" +
@@ -148,11 +149,12 @@ public class StoreDao {
         );
 
 
-        String findMenuCategoryListQuery = "SELECT DISTINCT menu_category_name\n" +
-                "From menu\n" +
-                "INNER JOIN (SELECT store_idx FROM Store) S ON menu.store_idx=S.store_idx\n" +
-                "INNER JOIN menu_category mc ON  menu.menu_category_idx=mc.menu_category_idx\n" +
-                "WHERE S.store_idx= ?";
+        String findMenuCategoryListQuery = "SELECT DISTINCT mcr.menu_category_name\n" +
+                "                From menu\n" +
+                "                INNER JOIN (SELECT store_idx FROM Store) S ON menu.store_idx=S.store_idx\n" +
+                "INNER JOIN (SELECT mr.menu_idx,mc.menu_category_name FROM menu_category_relation mr \n" +
+                "INNER JOIN menu_category mc ON mr.menu_category_idx=mc.menu_category_idx) mcr ON  menu.menu_idx=mcr.menu_idx\n" +
+                " WHERE S.store_idx= ?";
 
         List<String> menuCategoryList = this.jdbcTemplate.query(findMenuCategoryListQuery,
                 (rs, rowNum) -> rs.getString(1), store_idx);
@@ -161,11 +163,12 @@ public class StoreDao {
 
         for (String menuCateName : menuCategoryList) {
             //식당에서 설정한 메뉴 카테고리 별로 포함된 메뉴 리스트 출력
-            String findMenuListQuery = "SELECT menu_idx,menu_name,menu_price,menu_details\n" +
+            String findMenuListQuery = "SELECT menu.menu_idx,menu_name,menu_price,menu_details\n" +
                     "From menu\n" +
                     "INNER JOIN (SELECT store_idx FROM Store) S ON menu.store_idx=S.store_idx\n" +
-                    "INNER JOIN menu_category mc ON  menu.menu_category_idx=mc.menu_category_idx\n" +
-                    "WHERE S.store_idx= ? and mc.menu_category_name=?";
+                    "INNER JOIN (SELECT mr.menu_idx,mc.menu_category_name FROM menu_category_relation mr \n" +
+                    "INNER JOIN menu_category mc ON mr.menu_category_idx=mc.menu_category_idx) mcr ON  menu.menu_idx=mcr.menu_idx\n" +
+                    "WHERE S.store_idx= ? and mcr.menu_category_name=?";
             Object[] menuParams = {storeDist.getStore_idx(), menuCateName};
             List<Menu> menuList = this.jdbcTemplate.query(findMenuListQuery,
                     (rs, rowNum) -> new Menu(
@@ -183,8 +186,16 @@ public class StoreDao {
         List<String> imageURLList = this.jdbcTemplate.query(findImageURLListQuery,
                 (rs, rowNum) -> rs.getString(1), store_idx);
 
+        String findReviewRatingNumQuery="Select avg(ratings),count(review_idx) from review Where store_idx=?";
+        ReviewRatingNum reviewRatingNum=this.jdbcTemplate.queryForObject(findReviewRatingNumQuery,
+                (rs,rowNum)->{
+                        float ratings=rs.getFloat(1);
+                        int reviewNum=rs.getInt(2);
+                        return new ReviewRatingNum(ratings,reviewNum);
+                },store_idx);
+
         String findStoreInfoQuery = "SELECT store_name,store_min_order,CONCAT_WS(' ',store_siNm,store_sggNm,store_emdNm,store_streetNm,store_detailNm) AS store_address,store_phone,\n" +
-                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng,store_min_prep_time,store_max_prep_time\n" +
+                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng,store_min_prep_time,store_max_prep_time,store_pickup_status,store_cheetah_delivery\n" +
                 "From Store\n" +
                 "Where Store.store_idx=? ";
 
@@ -205,13 +216,15 @@ public class StoreDao {
                     double store_lng=rs.getDouble("store_lng");
                     int store_min_prep_time=rs.getInt("store_min_prep_time");
                     int store_max_prep_time=rs.getInt("store_max_prep_time");
+                    int store_pickup_status=rs.getInt("store_pickup_status");
+                    int store_cheetah_delivery=rs.getInt("store_cheetah_delivery");
                     int delivery_time=estimateDeliveryTime(storeDist.getStore_user_dist());
                     int store_min_delivery_time =store_min_prep_time+delivery_time;
                     int store_max_delivery_time=store_max_prep_time+delivery_time;
                     GetStoreRes gSR = new GetStoreRes(store_idx, store_name, store_min_order, store_address, store_phone, store_owner,
                             store_reg_num, store_buisness_hour, store_info, store_owner_note, store_join_date, store_delivery_fee,
                             store_lat,store_lng,storeDist.getStore_user_dist(),store_min_prep_time,store_max_prep_time
-                            ,store_min_delivery_time,store_max_delivery_time,storeCateList, imageURLList, menuListSortedByCategory);
+                            ,store_min_delivery_time,store_max_delivery_time,store_pickup_status,store_cheetah_delivery,reviewRatingNum.getReview_avg_rating(),reviewRatingNum.getReview_num(),storeCateList, imageURLList, menuListSortedByCategory);
                     return gSR;
 
                 }, store_idx);
@@ -405,6 +418,7 @@ public class StoreDao {
     public int createMenuCategory(int store_idx, PostMenuCategoryReq postMenuCategoryReq) {
         String lastInsertedIdxQuery="select max(menu_category_idx) from menu_category";
         int lastInsertedid= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+        System.out.println("lastInsertedid = " + lastInsertedid);
         String createMenuCateQuery="insert into menu_category(menu_category_idx,menu_category_name,store_idx) Values(?,?,?)";
         Object[] createMenuCateParam={lastInsertedid+1,postMenuCategoryReq.getMenu_category_name(),store_idx};
 
@@ -414,6 +428,7 @@ public class StoreDao {
     public int createMenu(int store_idx, PostMenuReq postMenuReq) {
         String lastInsertedIdxQuery="select max(menu_idx) from menu";
         int lastInsertedMenuidx= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
+
         String createMenuQuery="insert into menu(menu_idx,store_idx,menu_name,menu_price,menu_details) Values(?,?,?,?,?)";
         Object[] createMenuParam={lastInsertedMenuidx+1,store_idx,postMenuReq.getMenu_name(),postMenuReq.getMenu_price(),postMenuReq.getMenu_details()};
 
@@ -424,8 +439,9 @@ public class StoreDao {
         int lastInsertedid=0;
         if(menuInsertedCheck!=0){
             for(int menu_cate:postMenuReq.getMenu_cate_list()){
-                String lastInsertedIdQuery="select max(menu_category_idx) from menu_category_relation";
+                String lastInsertedIdQuery="select max(menu_category_relation_idx) from menu_category_relation";
                 lastInsertedid= this.jdbcTemplate.queryForObject(lastInsertedIdQuery,int.class);
+
                 String createMenuCateRelationQuery="insert into menu_category_relation(menu_category_relation_idx,menu_idx,menu_category_idx) values(?,?,?)";
                 Object[] createMenuCateRelationParams={lastInsertedid+1,lastInsertedMenuidx,menu_cate};
                 this.jdbcTemplate.update(createMenuCateRelationQuery,createMenuCateRelationParams);
@@ -435,12 +451,190 @@ public class StoreDao {
     }
 
     public int createOption(int menu_idx, PostOptionReq postOptionReq) {
-        String lastInsertedIdxQuery="select max(menu_option_idx) from menu_option";
+        String lastInsertedIdxQuery="select max(option_idx) from menu_option";
         int lastInsertedOptionidx= this.jdbcTemplate.queryForObject(lastInsertedIdxQuery,int.class);
-        String createOptionQuery="insert into menu(menu_option_idx,menu_idx,option_name,option_additional_price) Values(?,?,?,?)";
+        String createOptionQuery="insert into menu_option(option_idx,menu_idx,option_name,option_additional_price) Values(?,?,?,?)";
         Object[] optionParams={lastInsertedOptionidx+1,menu_idx,postOptionReq.getOption_name(),postOptionReq.getOption_additional_price()};
 
         return this.jdbcTemplate.update(createOptionQuery,optionParams);
+    }
+
+    public void modifyStoreInfo(int store_idx, PatchStoreReq patchStoreReq) {
+       String store_name =patchStoreReq.getStore_name();
+       int store_min_order= patchStoreReq.getStore_min_order();
+       String store_siNm = patchStoreReq.getStore_siNm();
+       String store_sggNm = patchStoreReq.getStore_sggNm();
+       String store_emdNm = patchStoreReq.getStore_emdNm();
+       String store_streetNm = patchStoreReq.getStore_streetNm();
+       String store_detailNm = patchStoreReq.getStore_detailNm();
+       int store_phone = patchStoreReq.getStore_phone();
+       String store_owner = patchStoreReq.getStore_owner();
+       String store_reg_num = patchStoreReq.getStore_reg_num();
+       String store_buisness_hour = patchStoreReq.getStore_buisness_hour();
+       String store_info = patchStoreReq.getStore_info();
+       String store_owner_note = patchStoreReq.getStore_owner_note();
+       int store_delivery_fee = patchStoreReq.getStore_delivery_fee();
+       double store_lng = patchStoreReq.getStore_lng();
+       double store_lat = patchStoreReq.getStore_lat();
+       int store_min_prep_time = patchStoreReq.getStore_min_prep_time();
+       int store_max_prep_time = patchStoreReq.getStore_max_prep_time();
+
+
+       if(store_name!=null){
+           String NameModifyQuery="update Store set store_name = ? where store_idx = ? ";
+           Object[] NameModifyParams={store_name,store_idx};
+           this.jdbcTemplate.update(NameModifyQuery,NameModifyParams);
+       }
+
+       if(store_min_order!=0){
+           //무료일때는 -1로 세팅되도록 함
+           String minOrderModifyQuery="update Store set store_min_order=? where store_idx=?";
+           Object[] minOrderModifyParams={store_min_order,store_idx};
+           this.jdbcTemplate.update(minOrderModifyQuery,minOrderModifyParams);
+       }
+        if(store_siNm != null & store_streetNm!=null & store_lng != 0 & store_lat != 0){
+            String AddressModifyQuery="update Store set store_siNm = ?, store_sggNm=?, store_emdNm=? ,store_streetNm =?, store_detailNm=? , store_lng=?, store_lat= ? where store_idx = ? ";
+            Object[] AddressModifyParams={store_siNm,store_sggNm,store_emdNm,store_emdNm,store_streetNm,store_detailNm,store_lng,store_lat,store_idx};
+            this.jdbcTemplate.update(AddressModifyQuery,AddressModifyParams);
+        }
+        if(store_phone != 0 ){
+            String phoneModifyQuery="update Store set store_phone= ? where store_idx =? ";
+            Object[] phoneModifyParams={store_phone,store_idx};
+            this.jdbcTemplate.update(phoneModifyQuery,phoneModifyParams);
+        }
+        if(store_owner!=null){
+            String ownerModifyQuery="update Store set store_owner=? where store_idx=?";
+            Object[] ownerModifyParams={store_owner,store_idx};
+            this.jdbcTemplate.update(ownerModifyQuery,ownerModifyParams);
+        }
+        if(store_reg_num!=null){
+            String regNumModifyQuery="update Store set store_reg_num=? where store_idx=?";
+            Object[] regNumModifyParams={store_reg_num,store_idx};
+            this.jdbcTemplate.update(regNumModifyQuery,regNumModifyParams);
+        }
+        if(store_buisness_hour!=null){
+            String buisHourModifyQuery="update Store set store_buisness_hour=? where store_idx=?";
+            Object[] buisHourModifyParam={store_buisness_hour,store_idx};
+            this.jdbcTemplate.update(buisHourModifyQuery,buisHourModifyParam);
+        }
+        if(store_info!=null){
+            String infoModifyQuery="update Store set store_info=? where store_idx=?";
+            Object[] infoModifyParam={store_info,store_idx};
+            this.jdbcTemplate.update(infoModifyQuery,infoModifyParam);
+        }
+
+        if(store_owner_note!=null){
+            String noteModifyQuery="update Store set store_owner_note=? where store_idx=?";
+            Object[] noteModifyParam={store_owner_note,store_idx};
+            this.jdbcTemplate.update(noteModifyQuery,noteModifyParam);
+        }
+
+        if(store_delivery_fee!= 0){
+            //무료일때는 -1로 세팅되도록 함
+            String deliveryFeeModifyQuery="update Store set store_delivery_fee=? where store_idx=?";
+            if(store_delivery_fee==-1) store_delivery_fee=0;
+            Object[] deliveryFeeModifyParam={store_delivery_fee,store_idx};
+            this.jdbcTemplate.update(deliveryFeeModifyQuery,deliveryFeeModifyParam);
+        }
+
+        if(store_min_prep_time != 0){
+            String minPrepModifyQuery="update Store set store_min_prep_time=? where store_idx=?";
+            Object[] minPrepModifyParam={store_min_prep_time,store_idx};
+            this.jdbcTemplate.update(minPrepModifyQuery,minPrepModifyParam);
+        }
+
+        if(store_max_prep_time != 0){
+            String maxPrepModifyQuery="update Store set store_max_prep_time=? where store_idx=?";
+            Object[] maxPrepModifyParam={store_max_prep_time,store_idx};
+            this.jdbcTemplate.update(maxPrepModifyQuery,maxPrepModifyParam);
+        }
+
+        List <Integer> category_list=patchStoreReq.getCategory_list();
+        if(!category_list.isEmpty()) {
+            String deleteCateListQuery="delete from store_cate where store_idx=?";
+            this.jdbcTemplate.update(deleteCateListQuery,store_idx);
+
+            for (int cate_idx : category_list) {
+                String lastInsertedStoreCateQuery = "select max(store_cate_idx) from store_cate";
+                int lastInsertedStoreCateid = this.jdbcTemplate.queryForObject(lastInsertedStoreCateQuery, int.class);
+                String insertStoreCateQuery = "insert into store_cate(store_cate_idx,store_idx,cate_idx) Values(?,?,?)";
+                Object[] storeCateParams = {lastInsertedStoreCateid + 1, store_idx, cate_idx};
+                this.jdbcTemplate.update(insertStoreCateQuery, storeCateParams);
+            }
+        }
+
+        List<String> store_img_list=patchStoreReq.getStore_img_url();
+        if(!store_img_list.isEmpty()){
+            String deleteImgListQuery="delete from store_img where store_idx=?";
+            this.jdbcTemplate.update(deleteImgListQuery,store_idx);
+
+        for(String img_url:store_img_list){
+            String lastInsertedStoreImgQuery="select max(store_img_idx) from store_img";
+            int lastInsertedStoreImgid= this.jdbcTemplate.queryForObject(lastInsertedStoreImgQuery,int.class);
+            String insertStoreImgQuery="insert into store_img(store_img_idx,store_idx,store_img_url) Values(?,?,?)";
+
+            Object[] storeImgParams={lastInsertedStoreImgid+1,store_idx,img_url};
+            this.jdbcTemplate.update(insertStoreImgQuery,storeImgParams);
+        }
+        }
+    }
+
+    public void modifyMenu(int menu_idx, PatchMenuReq patchMenuReq) {
+        String menu_name=patchMenuReq.getMenu_name();
+        int menu_price=patchMenuReq.getMenu_price();
+        String menu_details=patchMenuReq.getMenu_details();
+        List<Integer>menu_cate_list=patchMenuReq.getMenu_cate_list();
+
+        if(menu_name!=null){
+            String modifyMenuNameQuery="update menu set menu_name=? where menu_idx=?";
+            Object[] modifyMenuNameParams={menu_name,menu_idx};
+            this.jdbcTemplate.update(modifyMenuNameQuery,modifyMenuNameParams);
+        }
+
+        if(menu_price!=0 ){
+            String modifyMenuPriceQuery="update menu set menu_price=? where menu_idx=?";
+            if(menu_price==-1){menu_price=0;}
+            Object[] modifyMenuPriceParams={menu_price,menu_idx};
+            this.jdbcTemplate.update(modifyMenuPriceQuery,modifyMenuPriceParams);
+        }
+        if(menu_details!=null){
+            String modifyMenuDetailsQuery="update menu set menu_details=? where menu_idx=?";
+            Object[] modifyMenuDetailsParams={menu_details,menu_idx};
+            this.jdbcTemplate.update(modifyMenuDetailsQuery,modifyMenuDetailsParams);
+        }
+
+
+        if(!menu_cate_list.isEmpty()){
+        String deleteMenuCatelistQuery="delete from menu_category_relation where menu_idx=?";
+        this.jdbcTemplate.update(deleteMenuCatelistQuery,menu_idx);
+
+        for(int menu_cate:menu_cate_list){
+            String lastInsertedIdQuery="select max(menu_category_relation_idx) from menu_category_relation";
+            int lastInsertedid= this.jdbcTemplate.queryForObject(lastInsertedIdQuery,int.class);
+
+            String createMenuCateRelationQuery="insert into menu_category_relation(menu_category_relation_idx,menu_idx,menu_category_idx) values(?,?,?)";
+            Object[] createMenuCateRelationParams={lastInsertedid+1,menu_idx,menu_cate};
+            this.jdbcTemplate.update(createMenuCateRelationQuery,createMenuCateRelationParams);
+        }
+        }
+    }
+
+    public void modifyOption(int option_idx, PatchOptionReq patchOptionReq) {
+        String option_name=patchOptionReq.getOption_name();
+        int option_additional_price= patchOptionReq.getOption_additional_price();
+
+        if(option_additional_price!=0){
+            if(option_additional_price==-1) option_additional_price=0;
+            String modifyOptionPriceQuery="update menu_option set option_additional_price=? where option_idx=?";
+            Object[] modifyOptionPriceParams={option_additional_price,option_idx};
+            this.jdbcTemplate.update(modifyOptionPriceQuery,modifyOptionPriceParams);
+        }
+
+        if(option_name!=null){
+            String modifyOptionNameQuery="update menu_option set option_name=? where option_idx=?";
+            Object[] modifyOptionNameParams={option_name,option_idx};
+            this.jdbcTemplate.update(modifyOptionNameQuery,modifyOptionNameParams);
+        }
     }
 }
 

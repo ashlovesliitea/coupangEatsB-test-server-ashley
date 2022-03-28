@@ -1,12 +1,9 @@
 package com.example.demo.src.store;
 
-import com.example.demo.config.BaseException;
-import com.example.demo.config.BaseResponseStatus;
-import com.example.demo.src.store.model.*;
+import com.example.demo.src.store.model.request.*;
 import com.example.demo.utils.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.transaction.Transactional;
 
@@ -44,5 +41,17 @@ public class StoreService {
     public int createOption(int menu_idx, PostOptionReq postOptionReq) {
         int createOptionCheck=storeDao.createOption(menu_idx,postOptionReq);
         return createOptionCheck;
+    }
+
+    public void modifyStoreInfo(int store_idx, PatchStoreReq patchStoreReq) {
+        storeDao.modifyStoreInfo(store_idx,patchStoreReq);
+    }
+
+    public void modifyMenu(int menu_idx, PatchMenuReq patchMenuReq) {
+        storeDao.modifyMenu(menu_idx,patchMenuReq);
+    }
+
+    public void modifyOption(int option_idx,PatchOptionReq patchOptionReq) {
+        storeDao.modifyOption(option_idx,patchOptionReq);
     }
 }

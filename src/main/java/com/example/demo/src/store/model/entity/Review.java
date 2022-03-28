@@ -1,4 +1,4 @@
-package com.example.demo.src.store.model;
+package com.example.demo.src.store.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
