@@ -44,6 +44,13 @@ public class UserProvider {
 
     }
 
+    public int getUsersById(String user_id) throws BaseException{
+
+        int user_idx=userDao.getUsersById(user_id);
+        return user_idx;
+
+    }
+
 
     public GetUserRes getUser(int userIdx) throws BaseException {
 

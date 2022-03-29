@@ -1,6 +1,9 @@
 package com.example.demo.src.user;
 
 import com.example.demo.annotation.NoAuth;
+import com.example.demo.config.Constant;
+import com.example.demo.src.user.model.response.GetSocialOAuthRes;
+import com.example.demo.src.user.model.social.OAuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.demo.config.BaseException;
@@ -10,6 +13,7 @@ import com.example.demo.utils.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -25,14 +29,15 @@ public class UserController {
     private final UserProvider userProvider;
     private final UserService userService;
     private final JwtService jwtService;
-
+    private final OAuthService oAuthService;
 
 
     @Autowired
-    public UserController(UserProvider userProvider, UserService userService, JwtService jwtService){
+    public UserController(UserProvider userProvider, UserService userService, JwtService jwtService, OAuthService oAuthService){
         this.userProvider = userProvider;
         this.userService = userService;
         this.jwtService = jwtService;
+        this.oAuthService = oAuthService;
     }
     //TODO- UserController try-catch문 전부 삭제할것
 
@@ -80,6 +85,38 @@ public class UserController {
             return new BaseResponse<>((exception.getStatus()));
         }
 
+    }
+
+    /**
+     * 유저 소셜 로그인으로 리다이렉트 해주는 url
+     * [GET] /accounts/auth
+     * @return void
+     */
+    @NoAuth
+    @ResponseBody
+    @GetMapping("/sign-in/{socialLoginType}") //google이 들어올 것이다.
+    public void socialLoginRedirect(@PathVariable(name="socialLoginType") String SocialLoginPath) throws IOException {
+        Constant.SocialLoginType socialLoginType= Constant.SocialLoginType.valueOf(SocialLoginPath.toUpperCase());
+        oAuthService.request(socialLoginType);
+    }
+
+
+    /**
+     * Social Login API Server 요청에 의한 callback 을 처리
+     * @param socialLoginPath (GOOGLE, FACEBOOK, NAVER, KAKAO)
+     * @param code API Server 로부터 넘어오는 code
+     * @return SNS Login 요청 결과로 받은 Json 형태의 String 문자열 (access_token, refresh_token 등)
+     */
+
+    @NoAuth
+    @GetMapping(value = "/auth/{socialLoginType}/callback")
+    public BaseResponse<GetSocialOAuthRes> callback(
+            @PathVariable(name = "socialLoginType") String socialLoginPath,
+            @RequestParam(name = "code") String code) throws IOException, BaseException {
+        System.out.println(">> 소셜 로그인 API 서버로부터 받은 code :"+ code);
+        Constant.SocialLoginType socialLoginType= Constant.SocialLoginType.valueOf(socialLoginPath.toUpperCase());
+        GetSocialOAuthRes getSocialOAuthRes=oAuthService.oAuthLogin(socialLoginType,code);
+        return new BaseResponse<>(getSocialOAuthRes);
     }
 
     /**

@@ -54,4 +54,12 @@ public class StoreService {
     public void modifyOption(int option_idx,PatchOptionReq patchOptionReq) {
         storeDao.modifyOption(option_idx,patchOptionReq);
     }
+
+    public int createUserLikedStore(PostLikedReq postLikedReq) {
+        return storeDao.createUserLikedStore(postLikedReq);
+    }
+
+    public void deleteUserLikedStore(int liked_idx) {
+        storeDao.deleteUserLikedStore(liked_idx);
+    }
 }

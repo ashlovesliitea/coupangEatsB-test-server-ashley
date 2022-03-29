@@ -21,7 +21,9 @@ public enum BaseResponseStatus {
     EMPTY_JWT(false, 2001, "JWT를 입력해주세요."),
     INVALID_JWT(false, 2002, "유효하지 않은 JWT입니다."),
     INVALID_USER_JWT(false,2003,"권한이 없는 유저의 접근입니다."),
-
+    UNAVAILABLE_TO_PARSE_JSON(false,2004,"잘못된 형태의 JSON 요청입니다. 요청 형식을 다시 확인해주세요."),
+    INVALID_SOCIAL_LOGIN(false,2005,"잘못된 소셜 로그인 요청입니다. 다시 시도해주세요."),
+    HTTP_MESSAGE_UNREADABLE(false,2006,"JSON값을 파싱할 수 없습니다. 다시 시도해주세요."),
     // users
     USERS_EMPTY_USER_ID(false, 2010, "유저 아이디 값을 확인해주세요."),
 
@@ -57,9 +59,16 @@ public enum BaseResponseStatus {
     PASSWORD_DECRYPTION_ERROR(false, 4012, "비밀번호 복호화에 실패하였습니다."),
 
     FAIL_TO_CREATE_STORE(false,4020,"새로운 상점을 생성하는 데 실패했습니다. 재시도해 주세요"),
-    FAIL_TO_CREATE_MENU_CATEGORY(false,4020,"새로운 메뉴 카테고리를 생성하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_CREATE_MENU_CATEGORY(false,4025,"새로운 메뉴 카테고리를 생성하는 데 실패했습니다. 재시도해 주세요"),
     FAIL_TO_CREATE_MENU(false,4021,"새로운 메뉴를 생성하는 데 실패했습니다. 재시도해 주세요"),
-    FAIL_TO_CREATE_OPTION(false,4022,"새로운 옵션을 생성하는 데 실패했습니다. 재시도해 주세요");
+    FAIL_TO_CREATE_OPTION(false,4022,"새로운 옵션을 생성하는 데 실패했습니다. 재시도해 주세요"),
+
+    FAIL_TO_CREATE_ORDER(false,4023,"새로운 주문을 생성하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_CREATE_REVIEW(false,4024,"새로운 리뷰를 생성하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_CREATE_LIKED(false,4026,"새로운 즐겨찾기를 생성하는 데 실패했습니다. 재시도해 주세요"),
+
+    FAIL_TO_MODIFY_REVIEW(false,4027,"리뷰를 수정하는데 실패했습니다."),
+    FAIL_TO_DELETE_REVIEW(false,4028,"리뷰를 삭제하는데 실패했습니다.");
     // 5000 : 필요시 만들어서 쓰세요
     // 6000 : 필요시 만들어서 쓰세요
 
