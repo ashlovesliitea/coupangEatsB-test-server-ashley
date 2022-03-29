@@ -1,9 +1,6 @@
 package com.example.demo.src.order;
 
-import com.example.demo.src.order.model.Details;
-import com.example.demo.src.order.model.GetOrderRes;
-import com.example.demo.src.order.model.OrderDetail;
-import com.example.demo.src.order.model.PostOrderReq;
+import com.example.demo.src.order.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -26,7 +23,7 @@ public class OrderDao {
     public GetOrderRes getOrder(int orderIdx){
        List<OrderDetail>orderDetailList=getOrderDetailList(orderIdx);
         String getOrderListQuery="SELECT User.user_name,CONCAT_WS(' ',UA.siNm,UA.sggNm,UA.emdNm,UA.streetNm,UA.detailNm) AS user_address,\n" +
-                "\t\tStore.store_name,ol.order_request_store,ol.order_request_delivery,ol.discount,\n" +
+                "\t\tStore.store_name,ol.order_request_store,ol.order_request_delivery,ol.discount,ol.review_status,\n" +
                 "        UP.payment_name,ol.order_date\n" +
                 "FROM order_list ol\n" +
                 "INNER JOIN Store ON Store.store_idx=ol.store_idx\n" +
@@ -38,6 +35,7 @@ public class OrderDao {
 
 
        int orderParam=orderIdx;
+
        return this.jdbcTemplate.queryForObject(getOrderListQuery,
                (rs,rowNum)->{
                  String user_name=rs.getString("User.user_name");
@@ -48,6 +46,7 @@ public class OrderDao {
                  int discount=rs.getInt("ol.discount");
                  String payment_name=rs.getString("UP.payment_name");
                  Timestamp order_date=rs.getTimestamp("ol.order_date");
+                 int review_status=rs.getInt("review_status");
                  int totalPrice=0;
                    for(OrderDetail orderDetail:orderDetailList){
                        totalPrice+=orderDetail.getOrder_detail_total() * orderDetail.getMenu_amount();
@@ -55,7 +54,7 @@ public class OrderDao {
                    System.out.println("totalPrice = " + totalPrice);
                  totalPrice-=discount;
                  GetOrderRes getOrderRes=new GetOrderRes(orderIdx,user_name,user_address,store_name,
-                         order_request_store,order_request_delivery,discount,totalPrice,payment_name,order_date,orderDetailList);
+                         order_request_store,order_request_delivery,discount,totalPrice,review_status,payment_name,order_date,orderDetailList);
                  return getOrderRes;
 
                },orderParam);
@@ -82,7 +81,6 @@ public class OrderDao {
                             String menuName=rs.getString("menu_name");
                             int menuAmount=rs.getInt("menu_amount");
                             int menu_price=rs.getInt("menu_price");
-                            System.out.println("menu_price = " + menu_price);
                             orderedMenuPriceList.add(menu_price);
                             orderedMenuAmountList.add(menuAmount);
                             return menuName;
@@ -190,5 +188,152 @@ public class OrderDao {
 
         }
         return order_idx;
+    }
+
+    public int createReview(PostReviewReq postReviewReq) {
+        String lastInsertedReviewQuery="select max(review_idx) from review";
+        int lastInsertedReviewId=this.jdbcTemplate.queryForObject(lastInsertedReviewQuery,int.class);
+
+        String createReviewQuery="insert into review(review_idx,user_idx,store_idx,order_idx,ratings,review_comment) values(?,?,?,?,?,?)";
+        Object[] createReviewParams={lastInsertedReviewId+1,postReviewReq.getUser_idx(),postReviewReq.getStore_idx(),postReviewReq.getOrder_idx(),
+        postReviewReq.getRatings(),postReviewReq.getReview_comment()};
+
+        this.jdbcTemplate.update(createReviewQuery,createReviewParams);
+
+        lastInsertedReviewId=this.jdbcTemplate.queryForObject(lastInsertedReviewQuery,int.class);
+
+        List<String> review_img_list=postReviewReq.getReview_img_url_list();
+
+        for(String url:review_img_list){
+            String lastReviewImgQuery="select max(review_img_idx) from review_img";
+            int lastReviewImgId=this.jdbcTemplate.queryForObject(lastReviewImgQuery,int.class);
+
+            String insertReviewImgQuery="insert into review_img(review_img_idx,review_idx,review_img_url) values(?,?,?)";
+            Object[] insertReviewImgParams={lastReviewImgId+1,lastInsertedReviewId,url};
+        }
+
+        String updateReviewQuery="update order_list set review_status=? where order_idx=?";
+        Object[] updateReviewParams={1,postReviewReq.getOrder_idx()};
+        this.jdbcTemplate.update(updateReviewQuery,updateReviewParams);
+
+        return lastInsertedReviewId;
+    }
+
+    public int modifyReview(int review_idx,PatchReviewReq patchReviewReq) {
+        int ratings=patchReviewReq.getRatings();
+        String comment=patchReviewReq.getReview_comment();
+
+        int checkModify=0;
+        if(ratings!=0) {
+            String modifyRatingQuery = "update review set ratings=? where review_idx=?";
+            Object[] ratingParams={ratings,review_idx};
+            checkModify=this.jdbcTemplate.update(modifyRatingQuery,ratingParams);
+        }
+
+        if(comment!=null){
+            String modifyCommentQuery = "update review set review_comment=? where review_idx=?";
+            Object[] commentParams={comment,review_idx};
+            checkModify=this.jdbcTemplate.update(modifyCommentQuery,commentParams);
+        }
+        return checkModify;
+    }
+
+    public int deleteReview(int review_idx) {
+        String deleteReview="delete from review where review_idx=?";
+        return this.jdbcTemplate.update(deleteReview,review_idx);
+    }
+
+
+
+    public Review getReviewByIdx(int reviewIdx) {
+
+            String findOrderIdxQuery="Select order_idx From review Where review_idx=?";
+            int orderIdx=this.jdbcTemplate.queryForObject(findOrderIdxQuery,
+                    (rs,rowNum)->rs.getInt(1),reviewIdx);
+            System.out.println("orderIdx = " + orderIdx);
+
+            String findMenuListQuery="Select menu.menu_name from order_detail Inner Join menu ON order_detail.menu_idx=menu.menu_idx Where order_detail.order_idx=? ";
+            List<String> menuList=this.jdbcTemplate.query(findMenuListQuery,
+                    (rs,rowNum)->rs.getString(1),orderIdx);
+
+
+            //리뷰 사진이 존재하는지 여부 체크, 아니면 아래 list찾는 query에서 DataNotFoundException 발생
+            String reviewImgExistsQuery="select exists(select review_img_idx from review_img where review_idx=?)";
+            int reviewImgExists=this.jdbcTemplate.queryForObject(reviewImgExistsQuery,(rs,rowNum)->rs.getInt(1),reviewIdx);
+
+            List<String> reviewImgList= new ArrayList<>();
+
+            if(reviewImgExists==1){
+                String findReviewImgListQuery="select review_img_url from review_img where review_idx=?";
+                List<String> reviewImgList1=this.jdbcTemplate.query(findReviewImgListQuery,
+                        (rs,rowNum)->rs.getString(1),reviewIdx);
+                reviewImgList.addAll(reviewImgList1);
+                System.out.println("reviewImgList1.get = " + reviewImgList1.get(1));
+            }
+
+            String findReviewQuery="Select r.review_idx,r.user_idx,u.user_name,s.store_name,r.store_idx,\n" +
+                    "\tr.order_idx,r.ratings,r.review_comment\n" +
+                    "From review r\n" +
+                    "inner join User u on r.user_idx=u.user_idx\n" +
+                    "inner join Store s on s.store_idx=r.store_idx\n" +
+                    "Where r.review_idx=?";
+
+            Review review= this.jdbcTemplate.queryForObject(findReviewQuery,
+                    (rs,rowNum)->{
+                        int review_idx=rs.getInt(1);
+                        int user_idx=rs.getInt(2);
+                        String user_name=rs.getString(3);
+                        String store_name=rs.getString(4);
+                        int storeIdx=rs.getInt(5);
+                        int order_idx=rs.getInt(6);
+                        int ratings=rs.getInt(7);
+                        String review_comment=rs.getString(8);
+                        System.out.println("review_comment = " + review_comment);
+                        Review review1=new Review(review_idx,user_idx,user_name,storeIdx,store_name,order_idx,ratings,review_comment,reviewImgExists,reviewImgList,menuList);
+                        return review1;
+                    },reviewIdx);
+
+        return review;
+
+    }
+
+    public List<Review> getWholeReviewList() {
+        String reviewIdxQuery="select review_idx from review";
+        List<Integer> reviewIdxList=this.jdbcTemplate.query(reviewIdxQuery,
+                (rs,rowNum)->rs.getInt(1));
+
+        List<Review> reviewList=new ArrayList<>();
+        for(int reviewIdx:reviewIdxList){
+            Review review=getReviewByIdx(reviewIdx);
+            reviewList.add(review);
+
+        }
+        return reviewList;
+    }
+
+    public List<GetOrderRes> getWholeOrderList() {
+        String orderListQuery="select order_idx from order_list";
+        List<Integer> orderIdxList=this.jdbcTemplate.query(orderListQuery,
+                (rs,rowNum)->rs.getInt(1));
+
+        List<GetOrderRes> orderList=new ArrayList<>();
+        for(int orderIdx:orderIdxList){
+            GetOrderRes getOrderRes=getOrder(orderIdx);
+            orderList.add(getOrderRes);
+        }
+        return orderList;
+    }
+
+    public List<GetOrderRes> getUsersOrderList(int user_idx) {
+        String orderListByUserQuery="select order_idx from order_list where user_idx=?";
+        List<Integer> orderIdxByUserList=this.jdbcTemplate.query(orderListByUserQuery,
+                (rs,rowNum)->rs.getInt(1),user_idx);
+
+        List<GetOrderRes> orderList=new ArrayList<>();
+        for(int orderIdx:orderIdxByUserList){
+            GetOrderRes getOrderRes=getOrder(orderIdx);
+            orderList.add(getOrderRes);
+        }
+        return orderList;
     }
 }

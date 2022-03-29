@@ -105,4 +105,9 @@ public class UserDao {
     }
 
 
+    public int getUsersById(String user_id) {
+        String findUserIdxQuery="select user_idx from User where user_id= ?";
+        return this.jdbcTemplate.queryForObject(findUserIdxQuery,
+                (rs,rowNum)->rs.getInt(1),user_id);
+    }
 }

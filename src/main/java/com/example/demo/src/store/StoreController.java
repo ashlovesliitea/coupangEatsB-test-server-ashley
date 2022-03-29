@@ -168,4 +168,37 @@ public class StoreController{
         String Result="";
         return new BaseResponse<>(Result);
     }
+
+    @ResponseBody
+    @GetMapping("/liked")
+    public BaseResponse<List<GetStoreRes>> getUserLikedList(@RequestParam(value = "user-idx",required = false)int userIdx
+                                                             ,@RequestParam(value = "user-address-idx",required = false)int userAddressIdx){
+        List<GetStoreRes> getStoreResList=storeProvider.getUserLikedList(userIdx,userAddressIdx);
+        return new BaseResponse<>(getStoreResList);
+    }
+
+
+    @ResponseBody
+    @PostMapping("/liked")
+    public BaseResponse<String> createUserLikedStore(@RequestParam(value = "user-idx",required = false)int userIdx
+                                                    ,@RequestBody PostLikedReq postLikedReq){
+        int createLikedCheck= storeService.createUserLikedStore(postLikedReq);
+
+        if(createLikedCheck!=0){
+            String result="";
+        return new BaseResponse<>(result);
+        }
+        else{
+            return new BaseResponse<>(BaseResponseStatus.FAIL_TO_CREATE_LIKED);
+        }
+    }
+
+    @ResponseBody
+    @PatchMapping("/liked")
+    public BaseResponse<String> deleteUserLikedStore(@RequestParam(value = "liked-idx",required = false)int liked_idx){
+         storeService.deleteUserLikedStore(liked_idx);
+        String result="";
+        return new BaseResponse<>(result);
+
+    }
 }

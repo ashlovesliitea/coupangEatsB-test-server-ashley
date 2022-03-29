@@ -55,4 +55,9 @@ public class StoreProvider {
         List<Review> review =storeDao.getReviewFromStores(store_idx);
         return review;
     }
+
+    public List<GetStoreRes> getUserLikedList(int userIdx,int userAddressIdx) {
+        List<GetStoreRes> getStoreResList= storeDao.getUserLikedList(userIdx,userAddressIdx);
+        return getStoreResList;
+    }
 }

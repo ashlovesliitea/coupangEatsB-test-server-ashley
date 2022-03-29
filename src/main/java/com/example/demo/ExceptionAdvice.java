@@ -6,6 +6,7 @@ import com.example.demo.config.BaseResponseStatus;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.util.NestedServletException;
@@ -40,13 +41,24 @@ public class ExceptionAdvice {
         //비밀번호 입력시 SHA256 암호화 에러 관련 핸들러
         return new BaseResponse<>(BaseResponseStatus.PASSWORD_ENCRYPTION_ERROR);
     }
-    /*
+
     @ExceptionHandler(value= JsonProcessingException.class)
     public BaseResponse InvalidSocialLoginHandler(){
         return new BaseResponse(BaseResponseStatus.INVALID_SOCIAL_LOGIN);
-    }*/
+    }
+
+    @ExceptionHandler(value={JsonParseException.class})
+    public BaseResponse JsonParseExceptionHandler(){
+        return new BaseResponse(BaseResponseStatus.UNAVAILABLE_TO_PARSE_JSON);
+    }
+
+    @ExceptionHandler(value={HttpMessageNotReadableException.class})
+    public BaseResponse requestNotReadableExceptionhandler(){
+        return new BaseResponse(BaseResponseStatus.HTTP_MESSAGE_UNREADABLE);
+    }
+
     //JsonParseException,MalformedJwtException,NestedServletException
-    @ExceptionHandler(value={JsonParseException.class, MalformedInputException.class, NestedServletException.class})
+    @ExceptionHandler(value={MalformedInputException.class, NestedServletException.class})
     public BaseResponse JWTExceptionHandler(){
         return new BaseResponse(BaseResponseStatus.INVALID_JWT);
     }

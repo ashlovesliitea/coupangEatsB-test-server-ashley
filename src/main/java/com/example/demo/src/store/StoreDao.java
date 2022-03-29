@@ -43,7 +43,7 @@ public class StoreDao {
                 rs.getDouble(3))
                 ,findCateParam);
 
-        List<StoreDist> storeIdxFilteredByLocationList=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+        List<StoreDist> storeIdxFilteredByLocationList=getStoreListFilteredByLocation(storeIdxList,user_address_idx,1);
         List<GetStoreRes> storeListbyCate=new ArrayList<>();
 
         for(StoreDist storeDist:storeIdxFilteredByLocationList){
@@ -65,7 +65,7 @@ public class StoreDao {
                         rs.getDouble(2),
                         rs.getDouble(3)));
 
-        List <StoreDist> everyStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+        List <StoreDist> everyStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx,1);
 
         List<GetStoreRes> everyStoreList=new ArrayList<>();
         for(StoreDist storeDist:everyStoreListFilteredByLocation){
@@ -73,6 +73,26 @@ public class StoreDao {
             everyStoreList.add(getStoreRes);
         }
         return everyStoreList;
+    }
+
+
+    public List<GetStoreRes> getUserLikedList(int userIdx,int userAddressIdx) {
+        String findLikedStoreQuery="select Liked.store_idx,Store.store_lng,Store.store_lat from Liked " +
+                "INNER JOIN Store ON Store.store_idx=Liked.store_idx where Liked.user_idx=?";
+
+        List<StoreLocation> likedStoreList=this.jdbcTemplate.query(findLikedStoreQuery,
+                (rs,rowNum)->new StoreLocation(rs.getInt("store_idx"),
+                                                rs.getDouble("store_lng"),
+                                                rs.getDouble("store_lat")), userIdx);
+
+        List<StoreDist> likedStoreLocationList=getStoreListFilteredByLocation(likedStoreList,userAddressIdx,0);
+        List<GetStoreRes> likedStoreInfoList=new ArrayList<>();
+        for(StoreDist storeDist:likedStoreLocationList){
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            likedStoreInfoList.add(getStoreRes);
+
+        }
+            return likedStoreInfoList;
     }
 
     public List<GetStoreRes> getstoresByKeyword(int user_address_idx, String search_query) {
@@ -90,7 +110,7 @@ public class StoreDao {
                         rs.getDouble(2),
                         rs.getDouble(3)),keywordParams);
 
-        List <StoreDist> keywordStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+        List <StoreDist> keywordStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx,1);
 
         List<GetStoreRes> storeListFilteredByKeyword=new ArrayList<>();
         for(StoreDist storeDist:keywordStoreListFilteredByLocation){
@@ -100,7 +120,10 @@ public class StoreDao {
         return storeListFilteredByKeyword;
     }
 
-    public List<StoreDist> getStoreListFilteredByLocation(List <StoreLocation> storeIdxList, int user_address_idx){
+
+
+    public List<StoreDist> getStoreListFilteredByLocation(List <StoreLocation> storeIdxList, int user_address_idx,int location_filter){
+        //location_filter: 가까운 지역만으로 필터링 할 것인지 여부
         List<StoreDist>storeIdxListFilteredByLocation=new ArrayList<>();
         for(StoreLocation storeLocation :storeIdxList){
 
@@ -118,10 +141,12 @@ public class StoreDao {
             double dist= distance(user_lat,user_lng, storeLocation.getStore_lat(), storeLocation.getStore_lng());
             System.out.println("dist = " + dist);
 
-            if(dist<10){ //10km 반경에 존재하면 렌더링 리스트에 포함
+            if(location_filter==1&&dist<10){ //가까운 식당 필터링이 존재하고, 10km 반경에 존재하면 렌더링 리스트에 포함
                 storeIdxListFilteredByLocation.add(new StoreDist(storeLocation.getStore_idx(),dist));
             }
-
+            else if(location_filter==0) {//가까운 식당 필터링 X, 그냥 거리 계산만 해서 list에 추가함.
+                storeIdxListFilteredByLocation.add(new StoreDist(storeLocation.getStore_idx(),dist));
+            }
         }
         return storeIdxListFilteredByLocation;
     }
@@ -223,7 +248,7 @@ public class StoreDao {
                     int store_max_delivery_time=store_max_prep_time+delivery_time;
                     GetStoreRes gSR = new GetStoreRes(store_idx, store_name, store_min_order, store_address, store_phone, store_owner,
                             store_reg_num, store_buisness_hour, store_info, store_owner_note, store_join_date, store_delivery_fee,
-                            store_lat,store_lng,storeDist.getStore_user_dist(),store_min_prep_time,store_max_prep_time
+                            store_lng,store_lat,storeDist.getStore_user_dist(),store_min_prep_time,store_max_prep_time
                             ,store_min_delivery_time,store_max_delivery_time,store_pickup_status,store_cheetah_delivery,reviewRatingNum.getReview_avg_rating(),reviewRatingNum.getReview_num(),storeCateList, imageURLList, menuListSortedByCategory);
                     return gSR;
 
@@ -246,7 +271,7 @@ public class StoreDao {
                         rs.getDouble(2),
                         rs.getDouble(3)));
 
-        List <StoreDist> newestStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx);
+        List <StoreDist> newestStoreListFilteredByLocation=getStoreListFilteredByLocation(storeIdxList,user_address_idx,1);
 
         List<GetStoreRes> newestStoreList=new ArrayList<>();
         for(StoreDist storeDist:newestStoreListFilteredByLocation){
@@ -635,6 +660,24 @@ public class StoreDao {
             Object[] modifyOptionNameParams={option_name,option_idx};
             this.jdbcTemplate.update(modifyOptionNameQuery,modifyOptionNameParams);
         }
+    }
+
+    public int createUserLikedStore(PostLikedReq postLikedReq) {
+        String lastInsertedIdQuery="select max(liked_idx) from Liked";
+        int lastId=this.jdbcTemplate.queryForObject(lastInsertedIdQuery,int.class);
+
+        String createLikedQuery="insert into Liked(liked_idx,user_idx,store_idx) Values(?,?,?)";
+        Object[] createLikedParams={lastId+1,postLikedReq.getUser_idx(),postLikedReq.getStore_idx()};
+
+        this.jdbcTemplate.update(createLikedQuery,createLikedParams);
+
+        lastId=this.jdbcTemplate.queryForObject(lastInsertedIdQuery,int.class);
+        return lastId;
+    }
+
+    public void deleteUserLikedStore(int liked_idx) {
+        String deleteUserLikedQuery="delete from Liked where liked_idx=?";
+        this.jdbcTemplate.update(deleteUserLikedQuery,liked_idx);
     }
 }
 
