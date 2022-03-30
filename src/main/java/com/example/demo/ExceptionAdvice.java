@@ -63,7 +63,7 @@ public class ExceptionAdvice {
         return new BaseResponse(BaseResponseStatus.INVALID_JWT);
     }
 
-    @ExceptionHandler(value=Exception.class)
+    @ExceptionHandler(value= {NullPointerException.class,Exception.class})
     public void EtcExceptionHandler(Exception e){
         System.err.println(e);
     }

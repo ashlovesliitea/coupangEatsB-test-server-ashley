@@ -1,7 +1,11 @@
 package com.example.demo.src.user;
 
 
-import com.example.demo.src.user.model.*;
+import com.example.demo.src.user.model.entity.User;
+import com.example.demo.src.user.model.request.*;
+import com.example.demo.src.user.model.response.GetAddressRes;
+import com.example.demo.src.user.model.response.GetPaymentRes;
+import com.example.demo.src.user.model.response.GetUserRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -115,5 +119,60 @@ public class UserDao {
         String findUserPhoneQuery="select user_phone from User where user_idx=?";
         return this.jdbcTemplate.queryForObject(findUserPhoneQuery,
                 (rs,rowNum)->rs.getString(1),user_idx);
+    }
+
+    public int createUserAddress(PostAddressReq postAddressReq) {
+        String findLastIdQuery="select max(user_address_idx) from User_Address";
+        int lastIdx=this.jdbcTemplate.queryForObject(findLastIdQuery,int.class);
+        System.out.println("lastIdx = " + lastIdx);
+        System.out.println("nullTest = " + postAddressReq.getEmdNm());
+
+        String createUserAddressQuery="insert into User_Address(user_address_idx,user_idx,siNm,sggNm,emdNm,streetNm,detailNm,user_address_lng,user_address_lat)" +
+                "Values(?,?,?,?,?,?,?,?,?)";
+
+        Object[] usrAddressParams={lastIdx+1,postAddressReq.getUser_idx(),postAddressReq.getSiNm(),postAddressReq.getSggNm(),postAddressReq.getEmdNm(),
+        postAddressReq.getStreetNm(),postAddressReq.getDetailNm(),postAddressReq.getUser_address_lng(),postAddressReq.getUser_address_lat()};
+        return this.jdbcTemplate.update(createUserAddressQuery,usrAddressParams);
+    }
+
+    public List<GetAddressRes> getUserAddressList(int user_idx) {
+        String findUserAddressListQuery="select user_address_idx,CONCAT_WS(' ',siNm,sggNm,emdNm,streetNm,detailNm) AS user_address" +
+                "from User_Address where user_idx=?";
+        List<GetAddressRes> addressResList=this.jdbcTemplate.query(findUserAddressListQuery,
+                (rs,rowNum)->new GetAddressRes(
+                        rs.getInt(1),
+                        rs.getString(2)
+                ),user_idx);
+        return addressResList;
+    }
+
+    public int deleteUserAddress(int user_address_idx) {
+        String deleteAddressQuery="delete from User_Address where user_address_idx=?";
+        return this.jdbcTemplate.update(deleteAddressQuery,user_address_idx);
+    }
+
+    public int createPayment(PostPaymentReq postPaymentReq) {
+        String findLastIdQuery="select max(payment_idx) from User_Payment";
+        int lastIdx=this.jdbcTemplate.queryForObject(findLastIdQuery,int.class);
+
+        String createPaymentQuery="insert into User_Payment(payment_idx,user_idx,payment_name) Values(?,?,?)";
+        Object[] createPaymentParam={lastIdx+1,postPaymentReq.getUser_idx(),postPaymentReq.getPayment_name()};
+
+        return this.jdbcTemplate.update(createPaymentQuery,createPaymentParam);
+    }
+
+    public List<GetPaymentRes> getUserPaymentList(int user_idx) {
+        String findPaymentQuery="select payment_idx,payment_name from User_Payment where user_idx=?";
+        return this.jdbcTemplate.query(findPaymentQuery,
+                (rs,rowNum)->new GetPaymentRes(
+                        rs.getInt(1),
+                        rs.getString(2)
+                ),user_idx
+        );
+    }
+
+    public int deletePayment(int user_payment_idx) {
+        String deletePaymentQuery="delete from User_Payment where user_payment_idx=?";
+        return this.jdbcTemplate.update(deletePaymentQuery,user_payment_idx);
     }
 }

@@ -68,7 +68,12 @@ public enum BaseResponseStatus {
     FAIL_TO_CREATE_LIKED(false,4026,"새로운 즐겨찾기를 생성하는 데 실패했습니다. 재시도해 주세요"),
 
     FAIL_TO_MODIFY_REVIEW(false,4027,"리뷰를 수정하는데 실패했습니다."),
-    FAIL_TO_DELETE_REVIEW(false,4028,"리뷰를 삭제하는데 실패했습니다.");
+    FAIL_TO_DELETE_REVIEW(false,4028,"리뷰를 삭제하는데 실패했습니다."),
+
+    FAIL_TO_CREATE_NEW_USER_ADDDRESS(false,4029,"새로운 유저 주소를 등록하는데 실패했습니다."),
+    FAIL_TO_DELETE_USER_ADDDRESS(false,4030,"유저 주소를 삭제하는데 실패했습니다."),
+    FAIL_TO_CREATE_NEW_PAYMENT(false,4031,"새로운 결제수단을 등록하는데 실패했습니다."),
+    FAIL_TO_DELETE_PAYMENT(false,4032,"결제수단을 삭제하는데 실패했습니다.");
     // 5000 : 필요시 만들어서 쓰세요
     // 6000 : 필요시 만들어서 쓰세요
 

@@ -188,7 +188,7 @@ public class StoreDao {
 
         for (String menuCateName : menuCategoryList) {
             //식당에서 설정한 메뉴 카테고리 별로 포함된 메뉴 리스트 출력
-            String findMenuListQuery = "SELECT menu.menu_idx,menu_name,menu_price,menu_details\n" +
+            String findMenuListQuery = "SELECT menu.menu_idx,menu_name,menu_price,menu_details,menu_img_url\n" +
                     "From menu\n" +
                     "INNER JOIN (SELECT store_idx FROM Store) S ON menu.store_idx=S.store_idx\n" +
                     "INNER JOIN (SELECT mr.menu_idx,mc.menu_category_name FROM menu_category_relation mr \n" +
@@ -200,7 +200,8 @@ public class StoreDao {
                             rs.getInt(1),
                             rs.getString(2),
                             rs.getInt(3),
-                            rs.getString(4)
+                            rs.getString(4),
+                            rs.getString(5)
                     ), menuParams);
 
             menuListSortedByCategory.add(new MenuCategory(menuCateName, menuList));
@@ -319,7 +320,7 @@ public class StoreDao {
 
 
     public GetMenuRes getMenuAndOption(int menu_idx) {
-        String getMenuQuery="Select menu_name,menu_price,menu_details from menu where menu_idx=?";
+        String getMenuQuery="Select menu_name,menu_price,menu_details,menu_img_url from menu where menu_idx=?";
          String getOptionQuery= "Select option_idx,option_name,option_additional_price From menu_option where menu_idx=?";
         int menuParams=menu_idx;
 
@@ -328,7 +329,8 @@ public class StoreDao {
                      String menu_name=rs.getString(1);
                      int menu_price=rs.getInt(2);
                      String menu_details=rs.getString(3);
-                     Menu menu1= new Menu(menu_idx,menu_name,menu_price,menu_details);
+                     String menu_img_url=rs.getString(4);
+                     Menu menu1= new Menu(menu_idx,menu_name,menu_price,menu_details,menu_img_url);
 
                       return menu1;
 
@@ -494,76 +496,76 @@ public class StoreDao {
     }
 
     public void modifyStoreInfo(int store_idx, PatchStoreReq patchStoreReq) {
-       String store_name =patchStoreReq.getStore_name();
-       int store_min_order= patchStoreReq.getStore_min_order();
-       String store_siNm = patchStoreReq.getStore_siNm();
-       String store_sggNm = patchStoreReq.getStore_sggNm();
-       String store_emdNm = patchStoreReq.getStore_emdNm();
-       String store_streetNm = patchStoreReq.getStore_streetNm();
-       String store_detailNm = patchStoreReq.getStore_detailNm();
-       int store_phone = patchStoreReq.getStore_phone();
-       String store_owner = patchStoreReq.getStore_owner();
-       String store_reg_num = patchStoreReq.getStore_reg_num();
-       String store_buisness_hour = patchStoreReq.getStore_buisness_hour();
-       String store_info = patchStoreReq.getStore_info();
-       String store_owner_note = patchStoreReq.getStore_owner_note();
-       int store_delivery_fee = patchStoreReq.getStore_delivery_fee();
-       double store_lng = patchStoreReq.getStore_lng();
-       double store_lat = patchStoreReq.getStore_lat();
-       int store_min_prep_time = patchStoreReq.getStore_min_prep_time();
-       int store_max_prep_time = patchStoreReq.getStore_max_prep_time();
 
 
-       if(store_name!=null){
+       if(patchStoreReq.getStore_name()!=null){
+           String store_name =patchStoreReq.getStore_name();
+           System.out.println("store_name = " + store_name);
            String NameModifyQuery="update Store set store_name = ? where store_idx = ? ";
            Object[] NameModifyParams={store_name,store_idx};
            this.jdbcTemplate.update(NameModifyQuery,NameModifyParams);
        }
 
-       if(store_min_order!=0){
+       if(patchStoreReq.getStore_min_order()!=null){
+           int store_min_order= patchStoreReq.getStore_min_order();
            //무료일때는 -1로 세팅되도록 함
            String minOrderModifyQuery="update Store set store_min_order=? where store_idx=?";
            Object[] minOrderModifyParams={store_min_order,store_idx};
            this.jdbcTemplate.update(minOrderModifyQuery,minOrderModifyParams);
        }
-        if(store_siNm != null & store_streetNm!=null & store_lng != 0 & store_lat != 0){
+        if(patchStoreReq.getStore_siNm()!= null & patchStoreReq.getStore_streetNm()!=null
+                & patchStoreReq.getStore_lng() != 0 & patchStoreReq.getStore_lat() != 0){
+            String store_siNm= patchStoreReq.getStore_siNm();
+            String store_sggNm = patchStoreReq.getStore_sggNm();
+            String store_emdNm = patchStoreReq.getStore_emdNm();
+            String store_streetNm = patchStoreReq.getStore_streetNm();
+            String store_detailNm = patchStoreReq.getStore_detailNm();
+            double store_lng = patchStoreReq.getStore_lng();
+            double store_lat = patchStoreReq.getStore_lat();
             String AddressModifyQuery="update Store set store_siNm = ?, store_sggNm=?, store_emdNm=? ,store_streetNm =?, store_detailNm=? , store_lng=?, store_lat= ? where store_idx = ? ";
             Object[] AddressModifyParams={store_siNm,store_sggNm,store_emdNm,store_emdNm,store_streetNm,store_detailNm,store_lng,store_lat,store_idx};
             this.jdbcTemplate.update(AddressModifyQuery,AddressModifyParams);
         }
-        if(store_phone != 0 ){
+        if(patchStoreReq.getStore_phone() != null ){
+            String store_phone = patchStoreReq.getStore_phone();
             String phoneModifyQuery="update Store set store_phone= ? where store_idx =? ";
             Object[] phoneModifyParams={store_phone,store_idx};
             this.jdbcTemplate.update(phoneModifyQuery,phoneModifyParams);
         }
-        if(store_owner!=null){
+        if(patchStoreReq.getStore_owner()!=null){
+            String store_owner = patchStoreReq.getStore_owner();
             String ownerModifyQuery="update Store set store_owner=? where store_idx=?";
             Object[] ownerModifyParams={store_owner,store_idx};
             this.jdbcTemplate.update(ownerModifyQuery,ownerModifyParams);
         }
-        if(store_reg_num!=null){
+        if(patchStoreReq.getStore_reg_num()!=null){
+            String store_reg_num = patchStoreReq.getStore_reg_num();
             String regNumModifyQuery="update Store set store_reg_num=? where store_idx=?";
             Object[] regNumModifyParams={store_reg_num,store_idx};
             this.jdbcTemplate.update(regNumModifyQuery,regNumModifyParams);
         }
-        if(store_buisness_hour!=null){
+        if(patchStoreReq.getStore_buisness_hour()!=null){
+            String store_buisness_hour = patchStoreReq.getStore_buisness_hour();
             String buisHourModifyQuery="update Store set store_buisness_hour=? where store_idx=?";
             Object[] buisHourModifyParam={store_buisness_hour,store_idx};
             this.jdbcTemplate.update(buisHourModifyQuery,buisHourModifyParam);
         }
-        if(store_info!=null){
+        if(patchStoreReq.getStore_info()!=null){
+            String store_info = patchStoreReq.getStore_info();
             String infoModifyQuery="update Store set store_info=? where store_idx=?";
             Object[] infoModifyParam={store_info,store_idx};
             this.jdbcTemplate.update(infoModifyQuery,infoModifyParam);
         }
 
-        if(store_owner_note!=null){
+        if(patchStoreReq.getStore_owner_note()!=null){
+            String store_owner_note = patchStoreReq.getStore_owner_note();
             String noteModifyQuery="update Store set store_owner_note=? where store_idx=?";
             Object[] noteModifyParam={store_owner_note,store_idx};
             this.jdbcTemplate.update(noteModifyQuery,noteModifyParam);
         }
-
-        if(store_delivery_fee!= 0){
+        System.out.println("patchStoreReq.getStore_delivery_fee() = " + patchStoreReq.getStore_delivery_fee());
+        if(patchStoreReq.getStore_delivery_fee()!= null){
+            int store_delivery_fee = patchStoreReq.getStore_delivery_fee();
             //무료일때는 -1로 세팅되도록 함
             String deliveryFeeModifyQuery="update Store set store_delivery_fee=? where store_idx=?";
             if(store_delivery_fee==-1) store_delivery_fee=0;
@@ -571,20 +573,23 @@ public class StoreDao {
             this.jdbcTemplate.update(deliveryFeeModifyQuery,deliveryFeeModifyParam);
         }
 
-        if(store_min_prep_time != 0){
+        if(patchStoreReq.getStore_min_prep_time()!= null){
+            int store_min_prep_time = patchStoreReq.getStore_min_prep_time();
             String minPrepModifyQuery="update Store set store_min_prep_time=? where store_idx=?";
             Object[] minPrepModifyParam={store_min_prep_time,store_idx};
             this.jdbcTemplate.update(minPrepModifyQuery,minPrepModifyParam);
         }
 
-        if(store_max_prep_time != 0){
+        if(patchStoreReq.getStore_max_prep_time() != null){
+            int store_max_prep_time = patchStoreReq.getStore_max_prep_time();
             String maxPrepModifyQuery="update Store set store_max_prep_time=? where store_idx=?";
             Object[] maxPrepModifyParam={store_max_prep_time,store_idx};
             this.jdbcTemplate.update(maxPrepModifyQuery,maxPrepModifyParam);
         }
 
-        List <Integer> category_list=patchStoreReq.getCategory_list();
-        if(!category_list.isEmpty()) {
+
+        if(patchStoreReq.getCategory_list()!=null) {
+            List <Integer> category_list=patchStoreReq.getCategory_list();
             String deleteCateListQuery="delete from store_cate where store_idx=?";
             this.jdbcTemplate.update(deleteCateListQuery,store_idx);
 
@@ -597,8 +602,9 @@ public class StoreDao {
             }
         }
 
-        List<String> store_img_list=patchStoreReq.getStore_img_url();
-        if(!store_img_list.isEmpty()){
+
+        if(patchStoreReq.getStore_img_url()!=null){
+            List<String> store_img_list=patchStoreReq.getStore_img_url();
             String deleteImgListQuery="delete from store_img where store_idx=?";
             this.jdbcTemplate.update(deleteImgListQuery,store_idx);
 

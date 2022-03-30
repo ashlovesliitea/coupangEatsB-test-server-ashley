@@ -143,7 +143,8 @@ public class StoreController{
     //상점 정보 수정 API
     @ResponseBody
     @PatchMapping("/{storeIdx}")
-    public BaseResponse<String> modifyStoreInfo(@PathVariable("storeIdx")int store_idx, @RequestBody PatchStoreReq patchStoreReq){
+    public BaseResponse<String> modifyStoreInfo(@PathVariable("storeIdx")int store_idx,
+                                                @RequestBody PatchStoreReq patchStoreReq){
         storeService.modifyStoreInfo(store_idx,patchStoreReq);
         String Result="";
         return new BaseResponse<>(Result);
@@ -152,7 +153,9 @@ public class StoreController{
     //메뉴 수정 API
     @ResponseBody
     @PatchMapping("/{storeIdx}/menu/{menuIdx}")
-    public BaseResponse<String> modifyMenu(@PathVariable("storeIdx") int store_idx, @PathVariable("menuIdx") int menu_idx, @RequestBody PatchMenuReq patchMenuReq){
+    public BaseResponse<String> modifyMenu(@PathVariable("storeIdx") int store_idx,
+                                           @PathVariable("menuIdx") int menu_idx,
+                                           @RequestBody PatchMenuReq patchMenuReq){
         storeService.modifyMenu(menu_idx,patchMenuReq);
         String Result="";
         return new BaseResponse<>(Result);

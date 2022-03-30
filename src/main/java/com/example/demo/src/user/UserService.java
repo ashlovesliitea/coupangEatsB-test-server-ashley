@@ -3,7 +3,11 @@ package com.example.demo.src.user;
 
 
 import com.example.demo.config.BaseException;
-import com.example.demo.src.user.model.*;
+import com.example.demo.src.user.model.request.PatchUserReq;
+import com.example.demo.src.user.model.request.PostAddressReq;
+import com.example.demo.src.user.model.request.PostPaymentReq;
+import com.example.demo.src.user.model.request.PostUserReq;
+import com.example.demo.src.user.model.response.PostUserRes;
 import com.example.demo.utils.JwtService;
 import com.example.demo.utils.SHA256;
 import org.slf4j.Logger;
@@ -57,5 +61,22 @@ public class UserService {
             if(result == 0){
                 throw new BaseException(MODIFY_FAIL_USERNAME);
             }
+    }
+
+    public int createUserAddress(PostAddressReq postAddressReq) {
+
+        return userDao.createUserAddress(postAddressReq);
+    }
+
+    public int deleteUserAddress(int user_address_idx) {
+        return userDao.deleteUserAddress(user_address_idx);
+    }
+
+    public int createPayment(PostPaymentReq postPaymentReq) {
+        return userDao.createPayment(postPaymentReq);
+    }
+
+    public int deleteUserPayment(int user_payment_idx) {
+        return userDao.deletePayment(user_payment_idx);
     }
 }

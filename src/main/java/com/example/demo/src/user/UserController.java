@@ -2,16 +2,17 @@ package com.example.demo.src.user;
 
 import com.example.demo.annotation.NoAuth;
 import com.example.demo.config.Constant;
+import com.example.demo.src.user.model.entity.User;
 import com.example.demo.src.user.model.message.GetMessageReq;
 import com.example.demo.src.user.model.message.SendSmsResponse;
-import com.example.demo.src.user.model.response.GetSocialOAuthRes;
+import com.example.demo.src.user.model.request.*;
+import com.example.demo.src.user.model.response.*;
 import com.example.demo.src.user.model.social.OAuthService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.demo.config.BaseException;
 import com.example.demo.config.BaseResponse;
-import com.example.demo.src.user.model.*;
 import com.example.demo.utils.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -161,7 +162,7 @@ public class UserController {
     @NoAuth
     @ResponseBody
     @PostMapping("/sign-in")
-    public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq,@RequestParam(required = false)String redirectURL) throws BaseException {
+    public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq, @RequestParam(required = false)String redirectURL) throws BaseException {
 
         if (postLoginReq.getUser_id() == null) {
             return new BaseResponse<>(POST_USERS_EMPTY_EMAIL);
@@ -218,5 +219,71 @@ public class UserController {
         return new BaseResponse<>(sendSmsResponse);
     }
 
+    @ResponseBody
+    @PostMapping("/{userIdx}/address")
+    public BaseResponse<String> createUserAddress(@PathVariable("userIdx")int user_idx,
+                                                  @RequestBody PostAddressReq postAddressReq){
+        int createCheck=userService.createUserAddress(postAddressReq);
 
+        if(createCheck!=0){
+            return new BaseResponse<>("");
+        }
+        else{
+            return new BaseResponse<>(FAIL_TO_CREATE_NEW_USER_ADDDRESS);
+        }
+    }
+
+    @ResponseBody
+    @GetMapping("/{userIdx}/address")
+    public BaseResponse<List<GetAddressRes>> getUserAddressList(@PathVariable("userIdx")int user_idx){
+        List<GetAddressRes> addressList=userProvider.getUserAddressList(user_idx);
+        return new BaseResponse<>(addressList);
+    }
+
+    @ResponseBody
+    @PatchMapping("/{userIdx}/address/{addressIdx}")
+    public BaseResponse<String> deleteAddress(@PathVariable("userIdx")int user_idx,
+                                              @PathVariable("addressIdx")int user_address_idx){
+        int deleteCheck=userService.deleteUserAddress(user_address_idx);
+        if(deleteCheck!=0){
+            return new BaseResponse<>("");
+        }
+        else{
+            return new BaseResponse<>(FAIL_TO_DELETE_USER_ADDDRESS);
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/{userIdx}/payment")
+    public BaseResponse<String> createPayment(@PathVariable("userIdx") int user_idx
+    , @RequestBody PostPaymentReq postPaymentReq){
+        int createCheck=userService.createPayment(postPaymentReq);
+        if(createCheck!=0){
+            return new BaseResponse<>("");
+        }
+        else{
+            return new BaseResponse<>(FAIL_TO_CREATE_NEW_PAYMENT);
+        }
+
+    }
+
+    @ResponseBody
+    @GetMapping("/{userIdx}/payment")
+    public BaseResponse<List<GetPaymentRes>> getUserPaymentList(@PathVariable("userIdx")int user_idx){
+        List<GetPaymentRes> paymentResList=userProvider.getUserPaymentList(user_idx);
+        return new BaseResponse<>(paymentResList);
+    }
+
+    @ResponseBody
+    @PatchMapping("{userIdx}/payment/{paymentIdx}")
+    public BaseResponse<String> deleteUserPayment(@PathVariable("userIdx")int user_idx,
+                                                  @PathVariable("paymentIdx")int user_payment_idx){
+        int deleteCheck=userService.deleteUserPayment(user_payment_idx);
+        if(deleteCheck!=0){
+          return new BaseResponse<>("");
+        }
+        else{
+            return new BaseResponse<>(FAIL_TO_DELETE_PAYMENT);
+        }
+    }
 }

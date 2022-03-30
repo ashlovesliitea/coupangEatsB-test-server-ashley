@@ -1,4 +1,4 @@
-package com.example.demo.src.user.model;
+package com.example.demo.src.user.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,7 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class PostUserReq {
+public class User {
+    private int user_idx;
     private String user_id;
     private String user_pw;
     private String user_name;

@@ -12,4 +12,5 @@ public class Menu {
     private String menu_name;
     private int menu_price;
     private String menu_detail;
+    private String menu_img_url;
 }

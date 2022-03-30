@@ -2,8 +2,12 @@ package com.example.demo.src.user;
 
 
 import com.example.demo.config.BaseException;
-import com.example.demo.config.BaseResponseStatus;
-import com.example.demo.src.user.model.*;
+import com.example.demo.src.user.model.entity.User;
+import com.example.demo.src.user.model.request.PostLoginReq;
+import com.example.demo.src.user.model.response.GetAddressRes;
+import com.example.demo.src.user.model.response.GetPaymentRes;
+import com.example.demo.src.user.model.response.GetUserRes;
+import com.example.demo.src.user.model.response.PostLoginRes;
 import com.example.demo.utils.JwtService;
 import com.example.demo.utils.SHA256;
 import org.slf4j.Logger;
@@ -64,7 +68,7 @@ public class UserProvider {
 
     }
 
-    public PostLoginRes logIn(PostLoginReq postLoginReq,String redirectURL) throws BaseException{
+    public PostLoginRes logIn(PostLoginReq postLoginReq, String redirectURL) throws BaseException{
         User user = userDao.getPwd(postLoginReq);
         String encryptPwd;
 
@@ -85,5 +89,13 @@ public class UserProvider {
 
     public String findUserPhone(int user_idx) {
         return userDao.findUserPhone(user_idx);
+    }
+
+    public List<GetAddressRes> getUserAddressList(int user_idx) {
+        return userDao.getUserAddressList(user_idx);
+    }
+
+    public List<GetPaymentRes> getUserPaymentList(int user_idx) {
+        return userDao.getUserPaymentList(user_idx);
     }
 }
