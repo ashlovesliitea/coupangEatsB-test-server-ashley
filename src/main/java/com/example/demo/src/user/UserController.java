@@ -2,8 +2,11 @@ package com.example.demo.src.user;
 
 import com.example.demo.annotation.NoAuth;
 import com.example.demo.config.Constant;
+import com.example.demo.src.user.model.message.GetMessageReq;
+import com.example.demo.src.user.model.message.SendSmsResponse;
 import com.example.demo.src.user.model.response.GetSocialOAuthRes;
 import com.example.demo.src.user.model.social.OAuthService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.demo.config.BaseException;
@@ -14,6 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.List;
 
 
@@ -30,14 +38,15 @@ public class UserController {
     private final UserService userService;
     private final JwtService jwtService;
     private final OAuthService oAuthService;
-
+    private final SmsService smsService;
 
     @Autowired
-    public UserController(UserProvider userProvider, UserService userService, JwtService jwtService, OAuthService oAuthService){
+    public UserController(UserProvider userProvider, UserService userService, JwtService jwtService, OAuthService oAuthService, SmsService smsService){
         this.userProvider = userProvider;
         this.userService = userService;
         this.jwtService = jwtService;
         this.oAuthService = oAuthService;
+        this.smsService = smsService;
     }
     //TODO- UserController try-catch문 전부 삭제할것
 
@@ -197,6 +206,16 @@ public class UserController {
         } catch (BaseException exception) {
             return new BaseResponse<>((exception.getStatus()));
         }
+    }
+
+    @NoAuth
+    @ResponseBody
+    @GetMapping("/message")
+    public BaseResponse<SendSmsResponse> sendSMS(@RequestBody GetMessageReq getMessageReq) throws UnsupportedEncodingException, ParseException, NoSuchAlgorithmException, URISyntaxException, InvalidKeyException, JsonProcessingException {
+
+        String recipient=userProvider.findUserPhone(getMessageReq.getUser_idx());
+        SendSmsResponse sendSmsResponse=smsService.sendSms(recipient,getMessageReq.getContent());
+        return new BaseResponse<>(sendSmsResponse);
     }
 
 

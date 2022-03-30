@@ -110,4 +110,10 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(findUserIdxQuery,
                 (rs,rowNum)->rs.getInt(1),user_id);
     }
+
+    public String findUserPhone(int user_idx) {
+        String findUserPhoneQuery="select user_phone from User where user_idx=?";
+        return this.jdbcTemplate.queryForObject(findUserPhoneQuery,
+                (rs,rowNum)->rs.getString(1),user_idx);
+    }
 }
