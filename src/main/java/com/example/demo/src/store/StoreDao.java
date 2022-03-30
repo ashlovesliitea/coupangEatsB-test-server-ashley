@@ -47,7 +47,7 @@ public class StoreDao {
         List<GetStoreRes> storeListbyCate=new ArrayList<>();
 
         for(StoreDist storeDist:storeIdxFilteredByLocationList){
-            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist,user_address_idx);
             storeListbyCate.add(getStoreRes);
 
         }
@@ -69,7 +69,7 @@ public class StoreDao {
 
         List<GetStoreRes> everyStoreList=new ArrayList<>();
         for(StoreDist storeDist:everyStoreListFilteredByLocation){
-            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist,user_address_idx);
             everyStoreList.add(getStoreRes);
         }
         return everyStoreList;
@@ -88,7 +88,7 @@ public class StoreDao {
         List<StoreDist> likedStoreLocationList=getStoreListFilteredByLocation(likedStoreList,userAddressIdx,0);
         List<GetStoreRes> likedStoreInfoList=new ArrayList<>();
         for(StoreDist storeDist:likedStoreLocationList){
-            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist,userAddressIdx);
             likedStoreInfoList.add(getStoreRes);
 
         }
@@ -114,7 +114,7 @@ public class StoreDao {
 
         List<GetStoreRes> storeListFilteredByKeyword=new ArrayList<>();
         for(StoreDist storeDist:keywordStoreListFilteredByLocation){
-            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist,user_address_idx);
             storeListFilteredByKeyword.add(getStoreRes);
         }
         return storeListFilteredByKeyword;
@@ -153,7 +153,7 @@ public class StoreDao {
 
 
 
-    public GetStoreRes getWholeStoreInfo(StoreDist storeDist) {
+    public GetStoreRes getWholeStoreInfo(StoreDist storeDist,int user_address_idx) {
         int store_idx= storeDist.getStore_idx();
         //식당에 포함된 카테고리 리스트
         String findCateQuery = "SELECT scc.category_name\n" +
@@ -218,12 +218,19 @@ public class StoreDao {
                         int reviewNum=rs.getInt(2);
                         return new ReviewRatingNum(ratings,reviewNum);
                 },store_idx);
+        String userIdxQuery="select user_idx from User_Address where user_address_idx=?";
+        int user_idx=this.jdbcTemplate.queryForObject(userIdxQuery,(rs,rowNum)->rs.getInt(1),user_address_idx);
+
+        String findLikedStatus="select exists(select * from Liked where user_idx=? and store_idx=?)";
+
 
         String findStoreInfoQuery = "SELECT store_name,store_min_order,CONCAT_WS(' ',store_siNm,store_sggNm,store_emdNm,store_streetNm,store_detailNm) AS store_address,store_phone,\n" +
-                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng,store_min_prep_time,store_max_prep_time,store_pickup_status,store_cheetah_delivery\n" +
+                "store_owner,store_reg_num,store_buisness_hour,store_info,store_owner_note,store_join_date,store_delivery_fee,store_lat,store_lng,store_min_prep_time,store_max_prep_time,store_pickup_status,store_cheetah_delivery" +
+                ",exists(select * from Liked where user_idx=? and store_idx=?) as user_liked_status\n" +
                 "From Store\n" +
                 "Where Store.store_idx=? ";
 
+        Object[] findInfoParams={user_idx,store_idx,store_idx};
         GetStoreRes getStoreRes = this.jdbcTemplate.queryForObject(findStoreInfoQuery,
                 (rs, rowNum) -> {
                     String store_name = rs.getString("store_name");
@@ -246,13 +253,15 @@ public class StoreDao {
                     int delivery_time=estimateDeliveryTime(storeDist.getStore_user_dist());
                     int store_min_delivery_time =store_min_prep_time+delivery_time;
                     int store_max_delivery_time=store_max_prep_time+delivery_time;
+                    int user_liked_status=rs.getInt("user_liked_status");
                     GetStoreRes gSR = new GetStoreRes(store_idx, store_name, store_min_order, store_address, store_phone, store_owner,
                             store_reg_num, store_buisness_hour, store_info, store_owner_note, store_join_date, store_delivery_fee,
                             store_lng,store_lat,storeDist.getStore_user_dist(),store_min_prep_time,store_max_prep_time
-                            ,store_min_delivery_time,store_max_delivery_time,store_pickup_status,store_cheetah_delivery,reviewRatingNum.getReview_avg_rating(),reviewRatingNum.getReview_num(),storeCateList, imageURLList, menuListSortedByCategory);
+                            ,store_min_delivery_time,store_max_delivery_time,store_pickup_status,store_cheetah_delivery,reviewRatingNum.getReview_avg_rating(),reviewRatingNum.getReview_num(),
+                            user_liked_status,storeCateList, imageURLList, menuListSortedByCategory);
                     return gSR;
 
-                }, store_idx);
+                }, findInfoParams);
 
 
         return getStoreRes;
@@ -275,7 +284,7 @@ public class StoreDao {
 
         List<GetStoreRes> newestStoreList=new ArrayList<>();
         for(StoreDist storeDist:newestStoreListFilteredByLocation){
-            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+            GetStoreRes getStoreRes=getWholeStoreInfo(storeDist,user_address_idx);
             newestStoreList.add(getStoreRes);
         }
         return newestStoreList;
@@ -304,7 +313,7 @@ public class StoreDao {
 
         double dist= distance(user_lat,user_lng, storeLocation.getStore_lat(), storeLocation.getStore_lng());
         StoreDist storeDist=new StoreDist(store_idx,dist);
-        GetStoreRes getStoreRes=getWholeStoreInfo(storeDist);
+        GetStoreRes getStoreRes=getWholeStoreInfo(storeDist,user_address_idx);
         return getStoreRes;
     }
 
