@@ -83,4 +83,7 @@ public class UserProvider {
 
     }
 
+    public String findUserPhone(int user_idx) {
+        return userDao.findUserPhone(user_idx);
+    }
 }

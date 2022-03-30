@@ -35,6 +35,7 @@ public class GetStoreRes {
     private int store_cheetah_delivery;
     private float store_rating_avg;
     private int store_review_num;
+    private int user_liked_status;
     private List<String>category_list;
     private List<String>store_img_url;
     private List<MenuCategory> menu_list_stored_by_category;
