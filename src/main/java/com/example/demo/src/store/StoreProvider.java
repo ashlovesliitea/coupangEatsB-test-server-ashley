@@ -1,5 +1,6 @@
 package com.example.demo.src.store;
 
+import com.example.demo.src.store.model.request.GetLikedRes;
 import com.example.demo.src.store.model.response.GetMenuRes;
 import com.example.demo.src.store.model.response.GetStoreRes;
 import com.example.demo.src.store.model.entity.Review;
@@ -56,8 +57,9 @@ public class StoreProvider {
         return review;
     }
 
-    public List<GetStoreRes> getUserLikedList(int userIdx,int userAddressIdx) {
-        List<GetStoreRes> getStoreResList= storeDao.getUserLikedList(userIdx,userAddressIdx);
+    public List<GetLikedRes> getUserLikedList(int userIdx, int userAddressIdx) {
+        List<GetLikedRes> getStoreResList= storeDao.getUserLikedList(userIdx,userAddressIdx);
         return getStoreResList;
     }
+
 }

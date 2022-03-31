@@ -193,7 +193,7 @@ public class OrderDao {
     public int createReview(PostReviewReq postReviewReq) {
         String lastInsertedReviewQuery="select max(review_idx) from review";
         int lastInsertedReviewId=this.jdbcTemplate.queryForObject(lastInsertedReviewQuery,int.class);
-
+        System.out.println("lastInsertedReviewId = " + lastInsertedReviewId);
         String createReviewQuery="insert into review(review_idx,user_idx,store_idx,order_idx,ratings,review_comment) values(?,?,?,?,?,?)";
         Object[] createReviewParams={lastInsertedReviewId+1,postReviewReq.getUser_idx(),postReviewReq.getStore_idx(),postReviewReq.getOrder_idx(),
         postReviewReq.getRatings(),postReviewReq.getReview_comment()};
@@ -210,6 +210,7 @@ public class OrderDao {
 
             String insertReviewImgQuery="insert into review_img(review_img_idx,review_idx,review_img_url) values(?,?,?)";
             Object[] insertReviewImgParams={lastReviewImgId+1,lastInsertedReviewId,url};
+            this.jdbcTemplate.update(insertReviewImgQuery,insertReviewImgParams);
         }
 
         String updateReviewQuery="update order_list set review_status=? where order_idx=?";
@@ -239,6 +240,9 @@ public class OrderDao {
     }
 
     public int deleteReview(int review_idx) {
+        //주문내역의 review status를 먼저 변경해준다. 리뷰를 삭제하면 review 한 상태값도 0이 되어야 함.
+        String deleteQuery="update order_list set review_status=0 where order_idx=(select order_idx from review where review_idx=?)";
+        this.jdbcTemplate.update(deleteQuery,review_idx);
         String deleteReview="delete from review where review_idx=?";
         return this.jdbcTemplate.update(deleteReview,review_idx);
     }

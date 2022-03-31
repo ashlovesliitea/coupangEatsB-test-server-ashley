@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 public class PatchStoreReq {
@@ -29,5 +29,4 @@ public class PatchStoreReq {
     private Integer store_max_prep_time;
     private List<Integer> category_list;
     private List<String>store_img_url;
-
 }

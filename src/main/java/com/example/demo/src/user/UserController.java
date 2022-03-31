@@ -229,7 +229,7 @@ public class UserController {
             return new BaseResponse<>("");
         }
         else{
-            return new BaseResponse<>(FAIL_TO_CREATE_NEW_USER_ADDDRESS);
+            return new BaseResponse<>(FAIL_TO_CREATE_NEW_USER_ADDRESS);
         }
     }
 
@@ -249,7 +249,7 @@ public class UserController {
             return new BaseResponse<>("");
         }
         else{
-            return new BaseResponse<>(FAIL_TO_DELETE_USER_ADDDRESS);
+            return new BaseResponse<>(FAIL_TO_DELETE_USER_ADDRESS);
         }
     }
 

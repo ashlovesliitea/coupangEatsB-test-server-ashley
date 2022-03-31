@@ -30,10 +30,11 @@ public class StoreController{
 
     @ResponseBody
     @GetMapping("")
-    public BaseResponse<List<GetStoreRes>> getStoreList(@RequestParam(value="user-address-idx",required=false) int user_address_idx
+    public BaseResponse<List<GetStoreRes>> getStoreList(@RequestParam(value="user-address-idx",required=false) Integer user_address_idx
                                         , @RequestParam(value="category",required=false) String category
                                         , @RequestParam(value="q",required = false)String search_query){
-           if(category!=null){
+
+        if(category!=null){
                System.out.println("category = " + category);
             List<GetStoreRes> getStoreListByCategory=storeProvider.getStoresByCategory(user_address_idx,category);
             return new BaseResponse<>(getStoreListByCategory);}
@@ -97,7 +98,6 @@ public class StoreController{
 
     }
 
-    @NoAuth
     @ResponseBody
     @PostMapping("/{storeIdx}/menu-category")
     public BaseResponse<String> createMenuCategory(@PathVariable("storeIdx") int store_idx
@@ -145,9 +145,27 @@ public class StoreController{
     @PatchMapping("/{storeIdx}")
     public BaseResponse<String> modifyStoreInfo(@PathVariable("storeIdx")int store_idx,
                                                 @RequestBody PatchStoreReq patchStoreReq){
-        storeService.modifyStoreInfo(store_idx,patchStoreReq);
-        String Result="";
-        return new BaseResponse<>(Result);
+
+            int modifyCheck=storeService.modifyStoreInfo(store_idx,patchStoreReq);
+            if(modifyCheck!=0){
+                String Result="";
+                return new BaseResponse<>(Result);}
+            else return new BaseResponse<>(BaseResponseStatus.FAIL_TO_MODIFY_STORE);
+
+    }
+
+
+    @ResponseBody
+    @PostMapping("/{storeIdx}")
+    public BaseResponse<String> deleteStoreInfo(@PathVariable("storeIdx")int store_idx) {
+
+            int deleteCheck=storeService.deleteStoreInfo(store_idx);
+            if(deleteCheck!=0){
+                String Result="";
+                return new BaseResponse<>(Result);
+            }
+            else return new BaseResponse<>(BaseResponseStatus.FAIL_TO_DELETE_STORE);
+
     }
 
     //메뉴 수정 API
@@ -156,35 +174,72 @@ public class StoreController{
     public BaseResponse<String> modifyMenu(@PathVariable("storeIdx") int store_idx,
                                            @PathVariable("menuIdx") int menu_idx,
                                            @RequestBody PatchMenuReq patchMenuReq){
-        storeService.modifyMenu(menu_idx,patchMenuReq);
-        String Result="";
-        return new BaseResponse<>(Result);
+
+            int modifyCheck=storeService.modifyMenu(menu_idx,patchMenuReq);
+            if(modifyCheck!=0){
+                String Result="";
+                return new BaseResponse<>(Result);}
+            else return new BaseResponse<>(BaseResponseStatus.FAIL_TO_MODIFY_MENU);
+
+    }
+
+    @ResponseBody
+    @PostMapping("/{storeIdx}/menu/{menuIdx}")
+    public BaseResponse<String> deleteMenu(@PathVariable("storeIdx") int store_idx,
+                                           @PathVariable("menuIdx") int menu_idx) {
+
+
+            int deleteCheck = storeService.deleteMenu(menu_idx);
+            if (deleteCheck != 0) {
+                String Result = "";
+                return new BaseResponse<>(Result);
+            }
+            else return new BaseResponse<>(BaseResponseStatus.FAIL_TO_DELETE_MENU);
+
     }
 
     //옵션 수정 API
     @ResponseBody
     @PatchMapping("/{storeIdx}/menu/{menuIdx}/option/{optionIdx}")
     public BaseResponse<String> modifyOption(@PathVariable("storeIdx") int store_idx, @PathVariable("menuIdx") int menu_idx
-            ,@PathVariable("optionIdx") int option_idx, @RequestBody PatchOptionReq patchOptionReq){
+            ,@PathVariable("optionIdx") int option_idx
+            , @RequestBody PatchOptionReq patchOptionReq){
 
-        storeService.modifyOption(option_idx,patchOptionReq);
-        String Result="";
-        return new BaseResponse<>(Result);
+            int modifyCheck=storeService.modifyOption(menu_idx,patchOptionReq);
+            if(modifyCheck!=0){
+                String Result="";
+                return new BaseResponse<>(Result);}
+            else return new BaseResponse<>(BaseResponseStatus.FAIL_TO_MODIFY_OPTION);
+
+    }
+
+    @ResponseBody
+    @PostMapping("/{storeIdx}/menu/{menuIdx}/option/{optionIdx}")
+    public BaseResponse<String> modifyOption(@PathVariable("storeIdx") int store_idx, @PathVariable("menuIdx") int menu_idx
+            ,@PathVariable("optionIdx") int option_idx
+            ){
+
+            int deleteCheck=storeService.deleteOption(option_idx);
+            if(deleteCheck!=0){
+                String Result="";
+                return new BaseResponse<>(Result);
+            }
+            else return new BaseResponse<>(BaseResponseStatus.FAIL_TO_DELETE_OPTION);
+
     }
 
     @ResponseBody
     @GetMapping("/liked")
-    public BaseResponse<List<GetStoreRes>> getUserLikedList(@RequestParam(value = "user-idx",required = false)int userIdx
+    public BaseResponse<List<GetLikedRes>> getUserLikedList(@RequestParam(value = "user-idx",required = false)int userIdx
                                                              ,@RequestParam(value = "user-address-idx",required = false)int userAddressIdx){
-        List<GetStoreRes> getStoreResList=storeProvider.getUserLikedList(userIdx,userAddressIdx);
+        List<GetLikedRes> getStoreResList=storeProvider.getUserLikedList(userIdx,userAddressIdx);
         return new BaseResponse<>(getStoreResList);
     }
 
 
     @ResponseBody
     @PostMapping("/liked")
-    public BaseResponse<String> createUserLikedStore(@RequestParam(value = "user-idx",required = false)int userIdx
-                                                    ,@RequestBody PostLikedReq postLikedReq){
+    public BaseResponse<String> createUserLikedStore(@RequestBody PostLikedReq postLikedReq){
         int createLikedCheck= storeService.createUserLikedStore(postLikedReq);
 
         if(createLikedCheck!=0){
@@ -204,4 +259,6 @@ public class StoreController{
         return new BaseResponse<>(result);
 
     }
+
+
 }

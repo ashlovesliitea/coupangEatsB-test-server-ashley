@@ -136,8 +136,8 @@ public class UserDao {
     }
 
     public List<GetAddressRes> getUserAddressList(int user_idx) {
-        String findUserAddressListQuery="select user_address_idx,CONCAT_WS(' ',siNm,sggNm,emdNm,streetNm,detailNm) AS user_address" +
-                "from User_Address where user_idx=?";
+        String findUserAddressListQuery="select user_address_idx,CONCAT_WS(' ',siNm,sggNm,emdNm,streetNm,detailNm) AS user_address " +
+                "From User_Address where user_idx=?";
         List<GetAddressRes> addressResList=this.jdbcTemplate.query(findUserAddressListQuery,
                 (rs,rowNum)->new GetAddressRes(
                         rs.getInt(1),
@@ -172,7 +172,7 @@ public class UserDao {
     }
 
     public int deletePayment(int user_payment_idx) {
-        String deletePaymentQuery="delete from User_Payment where user_payment_idx=?";
+        String deletePaymentQuery="delete from User_Payment where payment_idx=?";
         return this.jdbcTemplate.update(deletePaymentQuery,user_payment_idx);
     }
 }

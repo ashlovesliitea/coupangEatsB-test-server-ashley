@@ -18,7 +18,7 @@ public class PostStoreReq {
     private String store_emdNm;
     private String store_streetNm;
     private String store_detailNm;
-    private int store_phone;
+    private String store_phone;
     private String store_owner;
     private String store_reg_num;
     private String store_buisness_hour;

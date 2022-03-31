@@ -43,16 +43,19 @@ public class StoreService {
         return createOptionCheck;
     }
 
-    public void modifyStoreInfo(int store_idx, PatchStoreReq patchStoreReq) {
-        storeDao.modifyStoreInfo(store_idx,patchStoreReq);
+    public int modifyStoreInfo(int store_idx, PatchStoreReq patchStoreReq) {
+        return storeDao.modifyStoreInfo(store_idx,patchStoreReq);
+
     }
 
-    public void modifyMenu(int menu_idx, PatchMenuReq patchMenuReq) {
-        storeDao.modifyMenu(menu_idx,patchMenuReq);
+    public int modifyMenu(int menu_idx, PatchMenuReq patchMenuReq){
+
+       return storeDao.modifyMenu(menu_idx,patchMenuReq);
+
     }
 
-    public void modifyOption(int option_idx,PatchOptionReq patchOptionReq) {
-        storeDao.modifyOption(option_idx,patchOptionReq);
+    public int modifyOption(int option_idx, PatchOptionReq patchOptionReq) {
+        return storeDao.modifyOption(option_idx,patchOptionReq);
     }
 
     public int createUserLikedStore(PostLikedReq postLikedReq) {
@@ -61,5 +64,17 @@ public class StoreService {
 
     public void deleteUserLikedStore(int liked_idx) {
         storeDao.deleteUserLikedStore(liked_idx);
+    }
+
+    public int deleteStoreInfo(int store_idx) {
+        return storeDao.deleteStoreInfo(store_idx);
+    }
+
+    public int deleteMenu(int menu_idx) {
+        return storeDao.deleteMenu(menu_idx);
+    }
+
+    public int deleteOption(int option_idx) {
+        return storeDao.deleteOption(option_idx);
     }
 }

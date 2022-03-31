@@ -63,6 +63,13 @@ public enum BaseResponseStatus {
     FAIL_TO_CREATE_MENU(false,4021,"새로운 메뉴를 생성하는 데 실패했습니다. 재시도해 주세요"),
     FAIL_TO_CREATE_OPTION(false,4022,"새로운 옵션을 생성하는 데 실패했습니다. 재시도해 주세요"),
 
+    FAIL_TO_MODIFY_STORE(false,4033,"상점 정보를 수정하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_MODIFY_MENU(false,4034,"메뉴를 수정하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_DELETE_STORE(false,4035,"상점 정보를 삭제하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_DELETE_MENU(false,4036,"메뉴를 삭제하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_MODIFY_OPTION(false,4037,"옵션을 수정하는 데 실패했습니다. 재시도해 주세요"),
+    FAIL_TO_DELETE_OPTION(false,4038,"옵션을 삭제하는 데 실패했습니다. 재시도해 주세요"),
+
     FAIL_TO_CREATE_ORDER(false,4023,"새로운 주문을 생성하는 데 실패했습니다. 재시도해 주세요"),
     FAIL_TO_CREATE_REVIEW(false,4024,"새로운 리뷰를 생성하는 데 실패했습니다. 재시도해 주세요"),
     FAIL_TO_CREATE_LIKED(false,4026,"새로운 즐겨찾기를 생성하는 데 실패했습니다. 재시도해 주세요"),
@@ -70,8 +77,8 @@ public enum BaseResponseStatus {
     FAIL_TO_MODIFY_REVIEW(false,4027,"리뷰를 수정하는데 실패했습니다."),
     FAIL_TO_DELETE_REVIEW(false,4028,"리뷰를 삭제하는데 실패했습니다."),
 
-    FAIL_TO_CREATE_NEW_USER_ADDDRESS(false,4029,"새로운 유저 주소를 등록하는데 실패했습니다."),
-    FAIL_TO_DELETE_USER_ADDDRESS(false,4030,"유저 주소를 삭제하는데 실패했습니다."),
+    FAIL_TO_CREATE_NEW_USER_ADDRESS(false,4029,"새로운 유저 주소를 등록하는데 실패했습니다."),
+    FAIL_TO_DELETE_USER_ADDRESS(false,4030,"유저 주소를 삭제하는데 실패했습니다."),
     FAIL_TO_CREATE_NEW_PAYMENT(false,4031,"새로운 결제수단을 등록하는데 실패했습니다."),
     FAIL_TO_DELETE_PAYMENT(false,4032,"결제수단을 삭제하는데 실패했습니다.");
     // 5000 : 필요시 만들어서 쓰세요

@@ -109,6 +109,7 @@ public class OrderController {
                                              @PathVariable("reviewIdx") int review_idx,
                                              @RequestBody PatchReviewReq patchReviewReq){
 
+
         int modifyReviewCheck=orderService.modifyReview(review_idx,patchReviewReq);
         if(modifyReviewCheck!=0){
             String result="";
@@ -117,28 +118,25 @@ public class OrderController {
         else{
             return new BaseResponse<>(BaseResponseStatus.FAIL_TO_MODIFY_REVIEW);
         }
-
     }
 
     /**
      * 리뷰 삭제 API
-     * [PATCH] /order/{orderIdx}/review/{reviewIdx}/deletion
+     * [PATCH] /order/{orderIdx}/review/{reviewIdx}
      * @return BaseResponse<String>
      */
     @ResponseBody
-    @PatchMapping("/{orderIdx}/review/{reviewIdx}/deletion")
+    @PostMapping("/{orderIdx}/review/{reviewIdx}")
     public BaseResponse<String> deleteReview(@PathVariable("orderIdx") int order_idx,
-                                             @PathVariable("reviewIdx") int review_idx){
+                                             @PathVariable("reviewIdx") int review_idx) {
 
-        int deleteReviewCheck=orderService.deleteReview(review_idx);
-        if(deleteReviewCheck!=0){
-            String result="";
+        int deleteReviewCheck = orderService.deleteReview(review_idx);
+        if (deleteReviewCheck != 0) {
+            String result = "";
             return new BaseResponse<>(result);
-        }
-        else{
+        } else {
             return new BaseResponse<>(BaseResponseStatus.FAIL_TO_DELETE_REVIEW);
         }
-
     }
 
     /**

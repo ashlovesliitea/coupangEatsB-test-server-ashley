@@ -32,7 +32,7 @@ public class OrderService {
         int order_idx=orderDao.createOrder(postOrderReq);
         return order_idx;
     }
-
+    @Transactional
     public int createReview(PostReviewReq postReviewReq) {
         int createReviewCheck=orderDao.createReview(postReviewReq);
         return createReviewCheck;

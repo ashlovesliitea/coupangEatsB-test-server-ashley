@@ -76,20 +76,31 @@ public class StoreDao {
     }
 
 
-    public List<GetStoreRes> getUserLikedList(int userIdx,int userAddressIdx) {
-        String findLikedStoreQuery="select Liked.store_idx,Store.store_lng,Store.store_lat from Liked " +
+
+    public List<GetLikedRes> getUserLikedList(int userIdx,int userAddressIdx) {
+        String findLikedStoreQuery="select Liked.liked_idx,Liked.store_idx,Store.store_lng,Store.store_lat from Liked " +
                 "INNER JOIN Store ON Store.store_idx=Liked.store_idx where Liked.user_idx=?";
 
+        List<Integer>likedIdxList=new ArrayList<>();
         List<StoreLocation> likedStoreList=this.jdbcTemplate.query(findLikedStoreQuery,
-                (rs,rowNum)->new StoreLocation(rs.getInt("store_idx"),
-                                                rs.getDouble("store_lng"),
-                                                rs.getDouble("store_lat")), userIdx);
+                (rs,rowNum)->{
+                                   int likedIdx=rs.getInt(1);
+                                   int store_idx=rs.getInt(2);
+                                   double store_lng=rs.getDouble(3);
+                                   double store_lat=rs.getDouble(4);
+                                   likedIdxList.add(likedIdx);
+                                    return new StoreLocation(
+                                                store_idx,
+                                                store_lng,
+                                                store_lat);
+                }, userIdx);
 
         List<StoreDist> likedStoreLocationList=getStoreListFilteredByLocation(likedStoreList,userAddressIdx,0);
-        List<GetStoreRes> likedStoreInfoList=new ArrayList<>();
-        for(StoreDist storeDist:likedStoreLocationList){
+        List<GetLikedRes> likedStoreInfoList=new ArrayList<>();
+        for(int i=0;i<likedStoreLocationList.size();i++){
+            StoreDist storeDist=likedStoreLocationList.get(i);
             GetStoreRes getStoreRes=getWholeStoreInfo(storeDist,userAddressIdx);
-            likedStoreInfoList.add(getStoreRes);
+            likedStoreInfoList.add(new GetLikedRes(likedIdxList.get(i),getStoreRes));
 
         }
             return likedStoreInfoList;
@@ -237,7 +248,7 @@ public class StoreDao {
                     String store_name = rs.getString("store_name");
                     int store_min_order = rs.getInt("store_min_order");
                     String store_address = rs.getString("store_address");
-                    int store_phone = rs.getInt("store_phone");
+                    String store_phone = rs.getString("store_phone");
                     String store_owner = rs.getString("store_owner");
                     String store_reg_num = rs.getString("store_reg_num");
                     String store_buisness_hour = rs.getString("store_buisness_hour");
@@ -495,15 +506,15 @@ public class StoreDao {
         return this.jdbcTemplate.update(createOptionQuery,optionParams);
     }
 
-    public void modifyStoreInfo(int store_idx, PatchStoreReq patchStoreReq) {
-
+    public int modifyStoreInfo(int store_idx, PatchStoreReq patchStoreReq) {
+      int modifyCheck=0;
 
        if(patchStoreReq.getStore_name()!=null){
            String store_name =patchStoreReq.getStore_name();
            System.out.println("store_name = " + store_name);
            String NameModifyQuery="update Store set store_name = ? where store_idx = ? ";
            Object[] NameModifyParams={store_name,store_idx};
-           this.jdbcTemplate.update(NameModifyQuery,NameModifyParams);
+           modifyCheck= this.jdbcTemplate.update(NameModifyQuery,NameModifyParams);
        }
 
        if(patchStoreReq.getStore_min_order()!=null){
@@ -511,7 +522,7 @@ public class StoreDao {
            //무료일때는 -1로 세팅되도록 함
            String minOrderModifyQuery="update Store set store_min_order=? where store_idx=?";
            Object[] minOrderModifyParams={store_min_order,store_idx};
-           this.jdbcTemplate.update(minOrderModifyQuery,minOrderModifyParams);
+           modifyCheck= this.jdbcTemplate.update(minOrderModifyQuery,minOrderModifyParams);
        }
         if(patchStoreReq.getStore_siNm()!= null & patchStoreReq.getStore_streetNm()!=null
                 & patchStoreReq.getStore_lng() != 0 & patchStoreReq.getStore_lat() != 0){
@@ -524,44 +535,44 @@ public class StoreDao {
             double store_lat = patchStoreReq.getStore_lat();
             String AddressModifyQuery="update Store set store_siNm = ?, store_sggNm=?, store_emdNm=? ,store_streetNm =?, store_detailNm=? , store_lng=?, store_lat= ? where store_idx = ? ";
             Object[] AddressModifyParams={store_siNm,store_sggNm,store_emdNm,store_emdNm,store_streetNm,store_detailNm,store_lng,store_lat,store_idx};
-            this.jdbcTemplate.update(AddressModifyQuery,AddressModifyParams);
+            modifyCheck= this.jdbcTemplate.update(AddressModifyQuery,AddressModifyParams);
         }
         if(patchStoreReq.getStore_phone() != null ){
             String store_phone = patchStoreReq.getStore_phone();
             String phoneModifyQuery="update Store set store_phone= ? where store_idx =? ";
             Object[] phoneModifyParams={store_phone,store_idx};
-            this.jdbcTemplate.update(phoneModifyQuery,phoneModifyParams);
+            modifyCheck= this.jdbcTemplate.update(phoneModifyQuery,phoneModifyParams);
         }
         if(patchStoreReq.getStore_owner()!=null){
             String store_owner = patchStoreReq.getStore_owner();
             String ownerModifyQuery="update Store set store_owner=? where store_idx=?";
             Object[] ownerModifyParams={store_owner,store_idx};
-            this.jdbcTemplate.update(ownerModifyQuery,ownerModifyParams);
+            modifyCheck= this.jdbcTemplate.update(ownerModifyQuery,ownerModifyParams);
         }
         if(patchStoreReq.getStore_reg_num()!=null){
             String store_reg_num = patchStoreReq.getStore_reg_num();
             String regNumModifyQuery="update Store set store_reg_num=? where store_idx=?";
             Object[] regNumModifyParams={store_reg_num,store_idx};
-            this.jdbcTemplate.update(regNumModifyQuery,regNumModifyParams);
+            modifyCheck= this.jdbcTemplate.update(regNumModifyQuery,regNumModifyParams);
         }
         if(patchStoreReq.getStore_buisness_hour()!=null){
             String store_buisness_hour = patchStoreReq.getStore_buisness_hour();
             String buisHourModifyQuery="update Store set store_buisness_hour=? where store_idx=?";
             Object[] buisHourModifyParam={store_buisness_hour,store_idx};
-            this.jdbcTemplate.update(buisHourModifyQuery,buisHourModifyParam);
+            modifyCheck= this.jdbcTemplate.update(buisHourModifyQuery,buisHourModifyParam);
         }
         if(patchStoreReq.getStore_info()!=null){
             String store_info = patchStoreReq.getStore_info();
             String infoModifyQuery="update Store set store_info=? where store_idx=?";
             Object[] infoModifyParam={store_info,store_idx};
-            this.jdbcTemplate.update(infoModifyQuery,infoModifyParam);
+            modifyCheck= this.jdbcTemplate.update(infoModifyQuery,infoModifyParam);
         }
 
         if(patchStoreReq.getStore_owner_note()!=null){
             String store_owner_note = patchStoreReq.getStore_owner_note();
             String noteModifyQuery="update Store set store_owner_note=? where store_idx=?";
             Object[] noteModifyParam={store_owner_note,store_idx};
-            this.jdbcTemplate.update(noteModifyQuery,noteModifyParam);
+            modifyCheck= this.jdbcTemplate.update(noteModifyQuery,noteModifyParam);
         }
         System.out.println("patchStoreReq.getStore_delivery_fee() = " + patchStoreReq.getStore_delivery_fee());
         if(patchStoreReq.getStore_delivery_fee()!= null){
@@ -570,21 +581,21 @@ public class StoreDao {
             String deliveryFeeModifyQuery="update Store set store_delivery_fee=? where store_idx=?";
             if(store_delivery_fee==-1) store_delivery_fee=0;
             Object[] deliveryFeeModifyParam={store_delivery_fee,store_idx};
-            this.jdbcTemplate.update(deliveryFeeModifyQuery,deliveryFeeModifyParam);
+            modifyCheck= this.jdbcTemplate.update(deliveryFeeModifyQuery,deliveryFeeModifyParam);
         }
 
         if(patchStoreReq.getStore_min_prep_time()!= null){
             int store_min_prep_time = patchStoreReq.getStore_min_prep_time();
             String minPrepModifyQuery="update Store set store_min_prep_time=? where store_idx=?";
             Object[] minPrepModifyParam={store_min_prep_time,store_idx};
-            this.jdbcTemplate.update(minPrepModifyQuery,minPrepModifyParam);
+            modifyCheck= this.jdbcTemplate.update(minPrepModifyQuery,minPrepModifyParam);
         }
 
         if(patchStoreReq.getStore_max_prep_time() != null){
             int store_max_prep_time = patchStoreReq.getStore_max_prep_time();
             String maxPrepModifyQuery="update Store set store_max_prep_time=? where store_idx=?";
             Object[] maxPrepModifyParam={store_max_prep_time,store_idx};
-            this.jdbcTemplate.update(maxPrepModifyQuery,maxPrepModifyParam);
+            modifyCheck= this.jdbcTemplate.update(maxPrepModifyQuery,maxPrepModifyParam);
         }
 
 
@@ -598,7 +609,7 @@ public class StoreDao {
                 int lastInsertedStoreCateid = this.jdbcTemplate.queryForObject(lastInsertedStoreCateQuery, int.class);
                 String insertStoreCateQuery = "insert into store_cate(store_cate_idx,store_idx,cate_idx) Values(?,?,?)";
                 Object[] storeCateParams = {lastInsertedStoreCateid + 1, store_idx, cate_idx};
-                this.jdbcTemplate.update(insertStoreCateQuery, storeCateParams);
+                modifyCheck= this.jdbcTemplate.update(insertStoreCateQuery, storeCateParams);
             }
         }
 
@@ -614,33 +625,35 @@ public class StoreDao {
             String insertStoreImgQuery="insert into store_img(store_img_idx,store_idx,store_img_url) Values(?,?,?)";
 
             Object[] storeImgParams={lastInsertedStoreImgid+1,store_idx,img_url};
-            this.jdbcTemplate.update(insertStoreImgQuery,storeImgParams);
+            modifyCheck= this.jdbcTemplate.update(insertStoreImgQuery,storeImgParams);
         }
         }
+        return modifyCheck;
     }
 
-    public void modifyMenu(int menu_idx, PatchMenuReq patchMenuReq) {
+    public int modifyMenu(int menu_idx, PatchMenuReq patchMenuReq) {
         String menu_name=patchMenuReq.getMenu_name();
         int menu_price=patchMenuReq.getMenu_price();
         String menu_details=patchMenuReq.getMenu_details();
         List<Integer>menu_cate_list=patchMenuReq.getMenu_cate_list();
 
+        int check=0;
         if(menu_name!=null){
             String modifyMenuNameQuery="update menu set menu_name=? where menu_idx=?";
             Object[] modifyMenuNameParams={menu_name,menu_idx};
-            this.jdbcTemplate.update(modifyMenuNameQuery,modifyMenuNameParams);
+            check=this.jdbcTemplate.update(modifyMenuNameQuery,modifyMenuNameParams);
         }
 
         if(menu_price!=0 ){
             String modifyMenuPriceQuery="update menu set menu_price=? where menu_idx=?";
             if(menu_price==-1){menu_price=0;}
             Object[] modifyMenuPriceParams={menu_price,menu_idx};
-            this.jdbcTemplate.update(modifyMenuPriceQuery,modifyMenuPriceParams);
+            check= this.jdbcTemplate.update(modifyMenuPriceQuery,modifyMenuPriceParams);
         }
         if(menu_details!=null){
             String modifyMenuDetailsQuery="update menu set menu_details=? where menu_idx=?";
             Object[] modifyMenuDetailsParams={menu_details,menu_idx};
-            this.jdbcTemplate.update(modifyMenuDetailsQuery,modifyMenuDetailsParams);
+            check= this.jdbcTemplate.update(modifyMenuDetailsQuery,modifyMenuDetailsParams);
         }
 
 
@@ -654,27 +667,30 @@ public class StoreDao {
 
             String createMenuCateRelationQuery="insert into menu_category_relation(menu_category_relation_idx,menu_idx,menu_category_idx) values(?,?,?)";
             Object[] createMenuCateRelationParams={lastInsertedid+1,menu_idx,menu_cate};
-            this.jdbcTemplate.update(createMenuCateRelationQuery,createMenuCateRelationParams);
+            check= this.jdbcTemplate.update(createMenuCateRelationQuery,createMenuCateRelationParams);
         }
         }
+       return check;
     }
 
-    public void modifyOption(int option_idx, PatchOptionReq patchOptionReq) {
-        String option_name=patchOptionReq.getOption_name();
-        int option_additional_price= patchOptionReq.getOption_additional_price();
+    public int modifyOption(int option_idx, PatchOptionReq patchOptionReq) {
+        String option_name = patchOptionReq.getOption_name();
+        int option_additional_price = patchOptionReq.getOption_additional_price();
+        int check=0;
 
-        if(option_additional_price!=0){
-            if(option_additional_price==-1) option_additional_price=0;
-            String modifyOptionPriceQuery="update menu_option set option_additional_price=? where option_idx=?";
-            Object[] modifyOptionPriceParams={option_additional_price,option_idx};
-            this.jdbcTemplate.update(modifyOptionPriceQuery,modifyOptionPriceParams);
+        if (option_additional_price != 0) {
+            if (option_additional_price == -1) option_additional_price = 0;
+            String modifyOptionPriceQuery = "update menu_option set option_additional_price=? where option_idx=?";
+            Object[] modifyOptionPriceParams = {option_additional_price, option_idx};
+            check=this.jdbcTemplate.update(modifyOptionPriceQuery, modifyOptionPriceParams);
         }
 
-        if(option_name!=null){
-            String modifyOptionNameQuery="update menu_option set option_name=? where option_idx=?";
-            Object[] modifyOptionNameParams={option_name,option_idx};
-            this.jdbcTemplate.update(modifyOptionNameQuery,modifyOptionNameParams);
+        if (option_name != null) {
+            String modifyOptionNameQuery = "update menu_option set option_name=? where option_idx=?";
+            Object[] modifyOptionNameParams = {option_name, option_idx};
+            check=this.jdbcTemplate.update(modifyOptionNameQuery, modifyOptionNameParams);
         }
+        return check;
     }
 
     public int createUserLikedStore(PostLikedReq postLikedReq) {
@@ -693,6 +709,21 @@ public class StoreDao {
     public void deleteUserLikedStore(int liked_idx) {
         String deleteUserLikedQuery="delete from Liked where liked_idx=?";
         this.jdbcTemplate.update(deleteUserLikedQuery,liked_idx);
+    }
+
+    public int deleteStoreInfo(int store_idx) {
+        String deleteStoreQuery="delete from Store where store_idx=?";
+        return this.jdbcTemplate.update(deleteStoreQuery,store_idx);
+    }
+
+    public int deleteMenu(int menu_idx) {
+        String deleteMenuQuery="delete from menu where menu_idx=?";
+        return this.jdbcTemplate.update(deleteMenuQuery,menu_idx);
+    }
+
+    public int deleteOption(int option_idx) {
+        String deleteOptionQuery="delete from menu_option where option_idx=?";
+        return this.jdbcTemplate.update(deleteOptionQuery,option_idx);
     }
 }
 
