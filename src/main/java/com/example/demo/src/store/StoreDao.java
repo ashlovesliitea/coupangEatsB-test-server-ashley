@@ -233,7 +233,6 @@ public class StoreDao {
         String userIdxQuery="select user_idx from User_Address where user_address_idx=?";
         int user_idx=this.jdbcTemplate.queryForObject(userIdxQuery,(rs,rowNum)->rs.getInt(1),user_address_idx);
 
-        String findLikedStatus="select exists(select * from Liked where user_idx=? and store_idx=?)";
 
 
         String findStoreInfoQuery = "SELECT store_name,store_min_order,CONCAT_WS(' ',store_siNm,store_sggNm,store_emdNm,store_streetNm,store_detailNm) AS store_address,store_phone,\n" +
@@ -281,7 +280,7 @@ public class StoreDao {
 
 
     public List<GetStoreRes> getNewestStoreList(int user_address_idx) {
-
+        //기간 쿼리 설정
         String findNewestStoreQuery="SELECT Store.store_idx,Store.store_lng,Store.store_lat\n" +
                 "From Store\n"
                 +"Where Store.store_join_date BETWEEN date_add(now(),interval -1 month) and now();";
