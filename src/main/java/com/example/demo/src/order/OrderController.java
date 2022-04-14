@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/app/order")
+@RequestMapping("/app/orders")
 public class OrderController {
      final Logger logger= LoggerFactory.getLogger(this.getClass());
      private final OrderProvider orderProvider;
@@ -83,7 +83,7 @@ public class OrderController {
      * @return BaseResponse<String>
      */
     @ResponseBody
-    @PostMapping("/{orderIdx}/review")
+    @PostMapping("/{orderIdx}/reviews")
     public BaseResponse<String> createReview(@PathVariable("orderIdx") int order_idx,
                                              @RequestBody PostReviewReq postReviewReq){
 
@@ -104,7 +104,7 @@ public class OrderController {
      * @return BaseResponse<String>
      */
     @ResponseBody
-    @PatchMapping("/{orderIdx}/review/{reviewIdx}")
+    @PatchMapping("/{orderIdx}/reviews/{reviewIdx}")
     public BaseResponse<String> modifyReview(@PathVariable("orderIdx") int order_idx,
                                              @PathVariable("reviewIdx") int review_idx,
                                              @RequestBody PatchReviewReq patchReviewReq){
@@ -122,11 +122,11 @@ public class OrderController {
 
     /**
      * 리뷰 삭제 API
-     * [PATCH] /order/{orderIdx}/review/{reviewIdx}
+     * [PATCH] /orders/{orderIdx}/reviews/{reviewIdx}
      * @return BaseResponse<String>
      */
     @ResponseBody
-    @PostMapping("/{orderIdx}/review/{reviewIdx}")
+    @PostMapping("/{orderIdx}/reviews/{reviewIdx}")
     public BaseResponse<String> deleteReview(@PathVariable("orderIdx") int order_idx,
                                              @PathVariable("reviewIdx") int review_idx) {
 
@@ -145,7 +145,7 @@ public class OrderController {
      * @return BaseResponse<Review>
      */
     @ResponseBody
-    @GetMapping("/review/{reviewIdx}")
+    @GetMapping("/reviews/{reviewIdx}")
     public BaseResponse<Review> getReviewByIdx(@PathVariable("reviewIdx") int review_idx){
         Review review=orderProvider.getReviewByIdx(review_idx);
         return new BaseResponse<>(review);
@@ -157,7 +157,7 @@ public class OrderController {
      * @return BaseResponse<List<Review>>
      */
     @ResponseBody
-    @GetMapping("/review")
+    @GetMapping("/reviews")
     public BaseResponse<List<Review>> getReviewByIdx(){
         List<Review> reviewList=orderProvider.getWholeReview();
         return new BaseResponse<>(reviewList);
