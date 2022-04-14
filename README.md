@@ -4,7 +4,7 @@
 - 이 Repository에서는 앱의 서버단에서 사용하는 REST API를 개발한 프로젝트를 확인하실 수 있습니다.
 
 ## 1. 기술 스택
-<img src='http://drive.google.com/uc?export=view&id=1KRkmdQnJoNk3yglGdKG8Muw0c_4PgdYk' /><br>
+<img src='https://user-images.githubusercontent.com/65891711/163364590-c3cd4160-067d-486a-bf7b-f09fecab0945.png' /><br>
 
 1) Backend : Spring Boot/Java
 2) Database : AWS RDS Database - MySQL 8.0.28 ver
@@ -19,7 +19,7 @@
 <br>
 
 ## 2. 프로젝트 ERD 명세서
-<img src='http://drive.google.com/uc?export=view&id=1Z528SehACa7HzUWz4RZ632yz_2oZVpye' /><br>
+<img src='https://user-images.githubusercontent.com/65891711/163364718-4990deab-1a63-4a1f-8580-79ae925e3945.png' /><br>
     
     1) URL : https://aquerytool.com/aquerymain/index/?rurl=5775b7c9-07c9-4242-9705-5f75f2d35d66&
     2) Password : cln7ve
